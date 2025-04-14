@@ -5,10 +5,8 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 ## Usage
 
 - Clone the repository
-- Install dependencies for the backend and frontend with `npm install` in both `server` and `client` directories.
-- Create the PostgreSQL database. In `server/db`, copy `.env.example` to `.env`, update the data and use `docker compose up -d`  to start the database in a Docker container. Create the schema with `npm run init-db` in the `server` directory. This runs `server/db/init-db.js` to create the database schema based on the `init.sql` file.
-- Start the backend server with `npm start` in the `server` directory. This runs `server/src/main.js`.
-- Start the frontend server with `npm run serve` in the `client` directory. This runs vite.
+- Navigate to the `server` directory and follow the server README instructions.
+- Navigate to the `client` directory and follow the client README instructions.
 
 ## Changelog
 
@@ -45,7 +43,7 @@ This directory contains the documentation files for the project.
 
 Standard files for a GitHub repository. `.gitignore` specifies files and directories that should be ignored by Git, `LICENCE` contains the project's license information, and `README.md` provides an overview of the project.
 
-### source directories
+### Source directories
 
 - `server` contains the backend code for the Express.js server.
 - `client` contains the frontend code for the Vue.js application.
@@ -59,45 +57,65 @@ Standard files for a GitHub repository. `.gitignore` specifies files and directo
 
 ## todos
 
-### Do later
+### todo: review
+
+- [X] Review home page
+- [ ] Review blog page
+- [ ] Review post page
+- [ ] Review about page
+- [ ] Add signup and login
+
+- [ ] Review admin page
+- [ ] Review setup page
+
+### Do now
 
 - structure admin panel
-  - CRUD admin interface for posts
-  - CRUD admin interface for users
-  - unread comments for admin
+  - CRUD admin interface for posts and users
+  - Classic CRUD admin interface for the whole database
+  - user roles and permissions, user management
+- Post CRUD, editor for role 'writer', 'admin'
 - Posts can do more:
   - attachments
   - markdown support for posts
     - callout, emoji preview
 - about page
-- social links, legal documents
-- quicklinks
-- responsive
+- footer content: social links, legal documents, quicklinks
+- responsive design
 - blog view pagination
-- category view - world map layout
 - dates
-- user roles and permissions, user management
 - comments
+  - unread comments for admin
 - post printing
 - Dark mode
 - arrow on home back up, not moving all the tiome
+- More links
+- login for users
+
+#### some ai prompts
+
+##### CRUD admin interface for posts
 
 ```plaintext
 Implement a CRUD admin interface for the posts. Display all posts in a styled table with columns for every field, and Actions. Each row should include "Show", "Edit", and "Delete" buttons. Add a "+ New Post" button above the table. Fetch data from the REST API. Include pages or components for creating, editing, showing, and listing posts. Use Tailwind CSS for styling similar to RedwoodJS scaffolded UIs.
 ```
 
-### Do after later
+### Do later
 
-- world clock, weather
+- world clock
+- weather
+- category view - world map layout
 
-### Do _NOW_
+## Pages
 
-- links around
-
-## Pages:
-
-- Home
+- home
   - RecentPosts
     - PostCard
   - Logo
   - LatestCategories
+- blog
+- post
+- admin
+- setup
+- about
+- sitemap

@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Ignore uploaded files but keep the directory structure
+storage/attachments/*
+!storage/attachments/.gitkeep
+
+# Logs
+*.log

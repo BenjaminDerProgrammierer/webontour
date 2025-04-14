@@ -1,0 +1,137 @@
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+:root {
+    /* Colors */
+    --color-primary: #1dd31d;
+    --color-primary-hover: #0db70d;
+    --color-secondary: #cc5800;
+    --color-secondary-hover: #b34e00;
+    --color-accent: #0a0034;
+    --color-accent-hover: #1a00b3;
+
+    /* Fonts */
+    --button-font-family: 'Inter', sans-serif;
+    --heading-font-family: 'Quicksand', sans-serif;
+    --body-font-family: 'Inria Sans', sans-serif;
+}
+
+/* Default Font */
+body {
+    font-family: var(--body-font-family);
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Button reset - remove default borders and appearance */
+button {
+    border: none;
+    background: none;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+}
+
+/* Link-Buttons */
+.link-button {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-family: var(--button-font-family, sans-serif);
+    color: white;
+    background-color: black;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+
+    &.primary {
+        background-color: var(--color-primary);
+
+        &:hover {
+            background-color: var(--color-primary-hover);
+        }
+    }
+
+    &.secondary {
+        background-color: var(--color-secondary);
+
+        &:hover {
+            background-color: var(--color-secondary-hover);
+        }
+    }
+
+    &.accent {
+        background-color: var(--color-accent);
+
+        &:hover {
+            background-color: var(--color-accent-hover);
+        }
+    }
+
+    &.bordered {
+        background-color: transparent;
+        border: 2px solid black;
+        padding: 8px 18px;
+        /* so they look the same size as the other buttons */
+
+        &.primary {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+
+            &:hover {
+                background-color: var(--color-primary);
+                color: white;
+            }
+        }
+
+        &.secondary {
+            color: var(--color-secondary);
+            border-color: var(--color-secondary);
+
+            &:hover {
+                background-color: var(--color-secondary);
+                color: white;
+            }
+        }
+
+        &.accent {
+            color: var(--color-accent);
+            border-color: var(--color-accent);
+
+            &:hover {
+                background-color: var(--color-accent);
+                color: white;
+            }
+        }
+    }
+}
+
+/* Common animations */
+@keyframes bounce {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}

@@ -1,15 +1,19 @@
 {
-  "name": "summerproject-2025",
+  "name": "summerproject-2025-client",
   "version": "1.0.0",
-  "description": "",
+  "description": "Client application for the Summer Project 2025",
   "main": "index.html",
   "scripts": {
-    "build": "npm run build-docs",
     "dev": "vite dev",
-    "build-docs": "./build-docs.sh"
+    "build": "vite build",
+    "serve": "vite preview",
+    "start": "npm run build && npm run serve"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "vue",
+    "vite"
+  ],
+  "author": "BenjaminDerProgrammierer",
   "license": "GPLv3",
   "type": "module",
   "devDependencies": {

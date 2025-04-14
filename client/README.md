@@ -2,17 +2,29 @@
 
 ## Usage
 
+### Quick Start
+
+- Clone the repository
+- Navigate to the `client` directory
+- Follow the [Installation instructions](#installation) instructions below.
+- Run `npm run dev` to start the development server
+- Open your browser and navigate to `http://localhost:5173` to view the application
+
 ### Installation
 
 - Run `npm install` to install dependencies
-- Configure your environment variables (See [Environment Variables](#environment-variables)) in the `db/.env` file. Use the `db/.env.example` file as a reference.
-- Initialize the database with `npm run init-db`
-- Start the server with `npm start` or `npm run dev` for development mode (hot reloading)
+- Configure your environment variables (See [Environment Variables](#environment-variables)) in the `.env` file. Use the `.env.example` file as a reference.
+
+### Starting the Development Server
+
+- Run `npm run dev` to start the development server
+
+### Production Build
+
+- Run `npm run build` to build the project for production
+- Run `npm run serve` to preview the production build
+- The production build will be created in the `dist` folder
 
 ### Environment Variables
 
-- `DB_USER`: database user (Default: `admin`)
-- `DB_PASSWORD`: database password (Default: `your_secure_password_here`)
-- `DB_HOST`: database host (Default: `localhost`)
-- `DB_NAME`: database name (Default: `summerproject`)
-- `DB_PORT`: database port (Default: `5432`)
+- `VITE_API_PROXY`: URL of the API server (default: `http://localhost:3000`)
