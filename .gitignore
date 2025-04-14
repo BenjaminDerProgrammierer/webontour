@@ -1,5 +1,10 @@
 # .gitignore
 
+### server data ###
+server/db/data
+server/attachments/*
+!server/attachments/.gitkeep
+
 ### Node ###
 
 # Logs
