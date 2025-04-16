@@ -1,7 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const { Pool } = require('pg');
-require('dotenv').config({ path: 'db/.env' });
+import { readFileSync, existsSync, rmSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import pkg from 'pg';
+const { Pool } = pkg;
+import dotenv from 'dotenv';
+import crypto from 'crypto';
+
+dotenv.config({ path: 'db/.env' });
+
+const __dirname = new URL('.', import.meta.url).pathname;
 
 // Check if the required environment variables are set
 if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_NAME) {
@@ -30,23 +36,23 @@ const pool = new Pool({
     console.log('Connected to the database');
 
     // execute SQL script
-    const sql = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf8');
+    const sql = readFileSync(join(__dirname, 'init.sql'), 'utf8');
     await client.query(sql);
     console.log('init.sql executed successfully');
 
     // delete attachments
-    const attachmentsPath = path.join(__dirname, '..', 'attachments');
-    if (fs.existsSync(attachmentsPath)) {
-      fs.rmSync(attachmentsPath, { recursive: true, force: true });
+    const attachmentsPath = join(__dirname, '..', 'attachments');
+    if (existsSync(attachmentsPath)) {
+      rmSync(attachmentsPath, { recursive: true, force: true });
     }
-    fs.mkdirSync(attachmentsPath, { recursive: true });
-    fs.writeFileSync(path.join(attachmentsPath, '.gitkeep'), '');
+    mkdirSync(attachmentsPath, { recursive: true });
+    writeFileSync(join(attachmentsPath, '.gitkeep'), '');
 
     // copy credentials to ../.env:
-    const jwt_secret = process.env.JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
-    const master_signup_key = process.env.MASTER_SIGNUP_KEY || require('crypto').randomBytes(32).toString('hex');
+    const jwt_secret = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+    const master_signup_key = process.env.MASTER_SIGNUP_KEY || crypto.randomBytes(32).toString('hex');
 
-    const file = path.join(__dirname, '..', '.env');
+    const file = join(__dirname, '..', '.env');
     const content = `DB_USER=${process.env.DB_USER}
 DB_PASSWORD=${process.env.DB_PASSWORD}
 DB_HOST=${process.env.DB_HOST}
@@ -56,12 +62,12 @@ JWT_SECRET=${jwt_secret}
 MASTER_SIGNUP_KEY=${master_signup_key}
 PORT=${process.env.PORT || 3000}
 `;
-    fs.writeFileSync(file, content, 'utf8');
+    writeFileSync(file, content, 'utf8');
+    client.release();
+    await pool.end();
   } catch (err) {
     console.error('Error initializing database:', err);
   } finally {
-    client.release();
-    await pool.end();
     console.log('Database initialization complete');
   }
 }());
