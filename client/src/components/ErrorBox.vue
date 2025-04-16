@@ -3,10 +3,9 @@ defineProps(['title', 'message']);
 </script>
 
 <template>
-    <h2>{{ title }}</h2>
-    <p>{{ message }}</p>
-    <div class="error-actions">
-    
+    <div class="error">
+        <h2>{{ title }}</h2>
+        <p>{{ message }}</p>
     </div>
 </template>
 <style scoped>
@@ -19,7 +18,7 @@ defineProps(['title', 'message']);
 }
 
 .error h2 {
-    color: #e74c3c; 
+    color: #e74c3c;
     margin-bottom: 15px;
     font-family: var(--heading-font-family);
 }
@@ -30,5 +29,4 @@ defineProps(['title', 'message']);
     justify-content: center;
     margin-top: 20px;
 }
-
 </style>

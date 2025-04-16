@@ -3,6 +3,7 @@ import RecentPosts from '../components/RecentPosts.vue';
 import Logo from '../components/Logo.vue';
 import LatestCategories from '../components/LatestCategories.vue';
 import { ref, onMounted } from 'vue';
+import ErrorBox from '../components/ErrorBox.vue';
 
 let apiError = ref(null);
 
@@ -39,10 +40,11 @@ onMounted(async () => {
     <section id="recent">
         <h2 v-if="!apiError">Recent Posts</h2>
 
-        <div class="api-error" v-if="apiError">
+        <!-- <div class="api-error" v-if="apiError">
             <h2>Error</h2>
             <p>Unable to connect to the backend server. Is it on?</p>
-        </div>
+        </div> -->
+        <ErrorBox v-if="apiError" title="Error" message="Unable to connect to the backend server. Is it on?" />
 
         <div v-if="!apiError">
             <RecentPosts />
@@ -133,31 +135,8 @@ section#recent {
     }
 
     /* with API connection error */
-    &:has(.api-error) {
-        &>div {
-            display: block;
-        }
-
-        .api-error {
-            margin: 0 auto;
-            width: 80%;
-            background-color: #fff0f0;
-            border-radius: 10px;
-            padding: 30px 20px;
-
-            h2 {
-                color: #e74c3c;
-                margin-bottom: 15px;
-                font-family: var(--heading-font-family);
-            }
-
-            .error-actions {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                margin-top: 20px;
-            }
-        }
+    &:has(.error)>div {
+        display: block;
     }
 
     h2 {
@@ -344,23 +323,16 @@ footer .footer-item ul.footer-links a:hover {
     }
 
     section#recent {
-        &:has(.api-error) {
+        &:has(.error) {
             padding: 0;
 
-            .api-error {
+            .error {
                 width: 100%;
+                max-width: 100%;
                 padding: 20px 10px;
                 border-radius: 0;
-                background-color: #600000;
                 margin: 0;
-
-                h2 {
-                    color: white;
-                }
-
-                p {
-                    color: white;
-                }
+                border-top: 1px solid #e74c3c;
             }
         }
     }

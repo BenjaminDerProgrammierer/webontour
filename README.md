@@ -60,7 +60,7 @@ Standard files for a GitHub repository. `.gitignore` specifies files and directo
 ### todo: review
 
 - [X] Review home page
-- [ ] Review blog page
+- [X] Review blog page
 - [ ] Review post page
 - [ ] Review about page
 - [ ] Add signup and login
@@ -82,7 +82,6 @@ Standard files for a GitHub repository. `.gitignore` specifies files and directo
 - about page
 - footer content: social links, legal documents, quicklinks
 - responsive design
-- blog view pagination
 - dates
 - comments
   - unread comments for admin
@@ -113,7 +112,10 @@ Implement a CRUD admin interface for the posts. Display all posts in a styled ta
     - PostCard
   - Logo
   - LatestCategories
+  - ErrorBox
 - blog
+  - Logo
+  - ErrorBox
 - post
 - admin
 - setup
