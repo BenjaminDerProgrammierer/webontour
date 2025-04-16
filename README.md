@@ -22,6 +22,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 - I noticed that I need a backend for the project, so I decided to use Express.js for the backend.
 - I built a REST API with Express.js and PostgreSQL for the backend. AI helped me a lot with that. I also used AI to build the frontend for the database (for now). I'll redo the frontend later myself.
+- I made the `BlogView` and `PostView` pages.
 
 ## Directory Structure
 
@@ -61,7 +62,7 @@ Standard files for a GitHub repository. `.gitignore` specifies files and directo
 
 - [X] Review home page
 - [X] Review blog page
-- [ ] Review post page
+- [X] Review post page
 - [ ] Review about page
 - [ ] Add signup and login
 
@@ -75,10 +76,6 @@ Standard files for a GitHub repository. `.gitignore` specifies files and directo
   - Classic CRUD admin interface for the whole database
   - user roles and permissions, user management
 - Post CRUD, editor for role 'writer', 'admin'
-- Posts can do more:
-  - attachments
-  - markdown support for posts
-    - callout, emoji preview
 - about page
 - footer content: social links, legal documents, quicklinks
 - responsive design
@@ -117,6 +114,8 @@ Implement a CRUD admin interface for the posts. Display all posts in a styled ta
   - Logo
   - ErrorBox
 - post
+  - MarkdownRenderer
+  - ErrorBox
 - admin
 - setup
 - about

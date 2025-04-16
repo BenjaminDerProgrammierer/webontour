@@ -1,16 +1,21 @@
+<!-- TODO:
+  - User can scroll through the popup images with left/right arrows
+  - User can close the popup with the escape key or by clicking outside the image
+  - markdown support for posts: callout, emoji preview
+-->
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MarkdownRenderer from '../components/MarkdownRenderer.vue';
+import ErrorBox from '../components/ErrorBox.vue';
 
 const route = useRoute();
 const router = useRouter();
 const post = ref(null);
 const loading = ref(true);
 const error = ref(null);
-
-const API_URL = `/api`;
-const UPLOADS_URL = `/uploads`;
+const popupAttachment = ref(null);
 
 onMounted(async () => {
   await fetchPost();
@@ -19,8 +24,8 @@ onMounted(async () => {
 async function fetchPost() {
   try {
     const postId = route.params.id;
-    const response = await fetch(`${API_URL}/posts/${postId}`);
-    
+    const response = await fetch(`/api/posts/${postId}`);
+
     if (response.ok) {
       post.value = await response.json();
     } else {
@@ -40,7 +45,7 @@ async function fetchPost() {
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString('de-AT', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -49,7 +54,7 @@ function formatDate(dateString) {
 
 function filterByTag(tag) {
   router.push({
-    path: '/blog', 
+    path: '/blog',
     query: { tag }
   });
 }
@@ -67,65 +72,63 @@ function filterByCategory(category) {
     <div v-if="loading" class="loading">
       Loading post...
     </div>
-    
-    <div v-else-if="error" class="error">
-      <h2>Error</h2>
-      <p>{{ error }}</p>
-      <div class="error-actions">
-        <router-link to="/blog" class="link-button secondary">
-          Back to Blog
-        </router-link>
-      </div>
-    </div>
-    
+
+    <ErrorBox v-else-if="error" :title="'Error'" :message="error" />
+
     <div v-else-if="post" class="post-content">
       <h1>{{ post.title }}</h1>
-      
-      <div class="post-meta">
-        <span class="author">By {{ post.author }}</span>
-        <span class="date">{{ formatDate(post.created_at) }}</span>
-      </div>
-      
-      <div class="post-categorization">
-        <div v-if="post.category_name" class="post-category">
-          <span class="category-label">Category:</span>
+
+      <div class="post-myMeta">
+        <div class="post-meta">
+          Uploaded by
+          <span class="author">{{ post.author }}</span>
+          on
+          <span class="date">{{ formatDate(post.created_at) }}</span>
+        </div>
+
+        <div class="post-categorization"
+          v-if="post.category_name || (post.tags && post.tags.filter(t => t !== null).length > 0)">
+
           <span class="category-pill" @click="filterByCategory(post.category_name)">
             {{ post.category_name }}
           </span>
-        </div>
-        
-        <div v-if="post.tags && post.tags.filter(t => t !== null).length > 0" class="post-tags">
-          <span class="tags-label">Tags:</span>
-          <span v-for="tag in post.tags.filter(t => t !== null)" :key="tag" 
-                class="tag-pill" @click="filterByTag(tag)">
+          <span v-for="tag in post.tags.filter(t => t !== null)" :key="tag" class="tag-pill" @click="filterByTag(tag)">
             {{ tag }}
           </span>
         </div>
       </div>
-      
+
       <div class="post-body">
         <MarkdownRenderer :markdown="post.content" />
       </div>
-      
+
       <div v-if="post.attachments && post.attachments.filter(a => a !== null).length > 0" class="post-attachments">
         <h3>Attachments</h3>
         <div class="attachments-gallery">
           <div v-for="(attachment, index) in post.attachments.filter(a => a !== null)" :key="index" class="attachment">
-            <a :href="`${UPLOADS_URL}/${attachment}`" target="_blank">
-              <img v-if="attachment.match(/\.(jpeg|jpg|gif|png|webp)$/i)" 
-                   :src="`${UPLOADS_URL}/${attachment}`" 
-                   :alt="`Attachment ${index + 1}`">
-              <div v-else class="file-attachment">
+
+            <img :src="`/uploads/${attachment}`" :alt="`Attachment ${index + 1}`"
+              v-if="attachment.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="popupAttachment = attachment" />
+
+            <a :href="`/uploads/${attachment}`" target="_blank" v-else>
+              <div class="file-attachment">
                 <span class="material-symbols-outlined">description</span>
-                <span>{{ attachment }}</span>
+                <span>{{ attachment.substring('attachments-'.length) }}</span>
               </div>
             </a>
           </div>
         </div>
       </div>
-      
+
       <div class="post-navigation">
         <router-link to="/blog" class="link-button secondary bordered">Back to Blog</router-link>
+      </div>
+
+      <div id="image-popup" v-if="popupAttachment">
+        <div class="popup-content">
+          <img :src="`/uploads/${popupAttachment}`" :alt="`Attachment ${popupAttachment.substring('attachments-'.length)}`" />
+          <button class="close-button" @click="popupAttachment = null">Close</button>
+        </div>
       </div>
     </div>
   </div>
@@ -138,7 +141,7 @@ function filterByCategory(category) {
   padding: 20px;
 }
 
-.loading, .error {
+.loading {
   text-align: center;
   padding: 50px 20px;
 }
@@ -149,74 +152,54 @@ function filterByCategory(category) {
   margin-bottom: 15px;
 }
 
-.post-meta {
+.post-myMeta {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: start;
   gap: 20px;
   margin-bottom: 20px;
+}
+
+.post-meta {
   color: #666;
   font-family: var(--body-font-family);
   font-style: italic;
+
+  span {
+    font-weight: bold;
+  }
 }
 
 .post-categorization {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 10px;
 }
 
-.post-category, .post-tags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.category-label, .tags-label {
-  font-weight: bold;
-  font-family: var(--body-font-family);
-}
-
-.category-pill {
+.category-pill,
+.tag-pill {
   background-color: var(--color-primary);
   color: white;
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
-}
 
-.category-pill:hover {
-  background-color: var(--color-secondary);
-}
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
 
-.post-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
+  &.tag-pill {
+    background-color: var(--color-accent);
+    color: white;
 
-.tag-pill {
-  background-color: var(--color-accent);
-  color: white;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.tag-pill:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.post-body {
-  font-family: var(--body-font-family);
-  font-size: 1.1rem;
-  line-height: 1.7;
-  margin-bottom: 40px;
+    &:hover {
+      background-color: var(--color-accent-hover);
+    }
+  }
 }
 
 .post-attachments {
@@ -240,9 +223,14 @@ function filterByCategory(category) {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+.attachment a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .attachment img {
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
@@ -277,4 +265,43 @@ function filterByCategory(category) {
   display: flex;
   justify-content: center;
 }
+
+#image-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-content {
+  position: relative;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  max-width: 80%;
+  max-height: 80%;
+}
+
+.popup-content img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 </style>

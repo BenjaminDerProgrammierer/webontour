@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, h, render, createApp } from 'vue';
+import { ref, onMounted, watch, h, createApp } from 'vue';
 import markdownit from 'markdown-it';
 import markdownItTaskLists from 'markdown-it-task-lists';
 import markdownItFootnote from 'markdown-it-footnote';
@@ -33,7 +33,9 @@ const md = markdownit({
     if (lang && hljs.getLanguage(lang)) {
       try {
         return hljs.highlight(str, { language: lang }).value;
-      } catch (__) {}
+      } catch (e) {
+        console.error('Error highlighting code:', e);
+      }
     }
     return ''; // use external default escaping
   }
@@ -87,7 +89,7 @@ const processCallouts = (markdown) => {
   // > [!TYPE] Title
   // > Content
   // The regex catches callout notation that begins a blockquote
-  const calloutRegex = /^>\s*\[!([\w-]+)(\+|\-)?((?:\s*\|[^|\n]*)*)\](?:\s+(.*?))?$/gm;
+  const calloutRegex = /^>\s*\[!([\w-]+)[+-]?((?:\s*\|[^|\n]*)*)\](?:\s+(.*?))?$/gm;
   
   // Find all callout blocks
   let match;
@@ -238,9 +240,7 @@ const processCalloutPlaceholders = () => {
       const type = placeholder.getAttribute('data-callout-type');
       const title = decodeURIComponent(placeholder.getAttribute('data-callout-title') || '');
       const content = decodeURIComponent(placeholder.getAttribute('data-callout-content') || '');
-      const foldable = placeholder.getAttribute('data-callout-foldable') === 'true';
       const collapsed = placeholder.getAttribute('data-callout-collapsed') === 'true';
-      const bgColor = placeholder.getAttribute('data-callout-bgcolor') || '';
       const iconName = placeholder.getAttribute('data-callout-icon') || '';
       
       // Create the callout component
