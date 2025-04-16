@@ -187,7 +187,7 @@ function truncateContent(content, maxLength = 150) {
       Loading posts...
     </div>
 
-    <ErrorBox v-if="error" :title="'Error'" :message="error" />
+    <ErrorBox v-else-if="error" :title="'Error'" :message="error" />
 
     <template v-else>
       <div class="filters-container">
