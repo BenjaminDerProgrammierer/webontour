@@ -453,7 +453,7 @@ img {
 .tag-pill {
   background-color: var(--color-primary);
   color: white;
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
   cursor: pointer;
