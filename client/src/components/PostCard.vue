@@ -7,7 +7,6 @@ const props = defineProps({
   }
 });
 
-const UPLOADS_URL = `/uploads`;
 
 // Function to format date
 function formatDate(dateString) {
@@ -32,7 +31,7 @@ function hasValidImage() {
 // Get image from post attachments or use placeholder
 function getPostImage() {
   if (hasValidImage()) {
-    return `${UPLOADS_URL}/${props.post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`;
+    return `/uploads/${props.post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`;
   }
   // Fallback to placeholder image
   return `https://picsum.photos/900/600?random=${Math.floor(Math.random() * 1000)}`;

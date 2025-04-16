@@ -30,8 +30,6 @@ const showNewCategoryInput = ref(false);
 // UI state
 const activeTab = ref('posts'); // 'posts', 'users' or 'crud'
 
-const API_URL = `/api`;
-const UPLOADS_URL = `/uploads`;
 
 onMounted(async () => {
   await checkAuthStatus();
@@ -43,7 +41,7 @@ onMounted(async () => {
 async function checkAuthStatus() {
   try {
     // First check if setup is needed
-    const setupResponse = await fetch(`${API_URL}/setup/status`, {
+    const setupResponse = await fetch(`/api/setup/status`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -61,7 +59,7 @@ async function checkAuthStatus() {
     }
     
     // Continue with normal auth check
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await fetch(`/api/auth/me`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -90,7 +88,7 @@ async function login(event) {
   const password = event.target.password.value;
   
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`/api/auth/login`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -117,7 +115,7 @@ async function login(event) {
 
 async function logout() {
   try {
-    await fetch(`${API_URL}/auth/logout`, {
+    await fetch(`/api/auth/logout`, {
       method: 'POST',
       credentials: 'include'
     });
@@ -130,7 +128,7 @@ async function logout() {
 
 async function fetchPosts() {
   try {
-    const response = await fetch(`${API_URL}/posts`, {
+    const response = await fetch(`/api/posts`, {
       credentials: 'include'
     });
     
@@ -146,7 +144,7 @@ async function fetchPosts() {
 
 async function fetchTags() {
   try {
-    const response = await fetch(`${API_URL}/posts/tags/all`, {
+    const response = await fetch(`/api/posts/tags/all`, {
       credentials: 'include'
     });
     
@@ -162,7 +160,7 @@ async function fetchTags() {
 
 async function fetchCategories() {
   try {
-    const response = await fetch(`${API_URL}/posts/categories/all`, {
+    const response = await fetch(`/api/posts/categories/all`, {
       credentials: 'include'
     });
     
@@ -269,13 +267,13 @@ async function submitPost(event) {
     let response;
     
     if (formMode.value === 'create') {
-      response = await fetch(`${API_URL}/posts`, {
+      response = await fetch(`/api/posts`, {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
     } else {
-      response = await fetch(`${API_URL}/posts/${currentPostId.value}`, {
+      response = await fetch(`/api/posts/${currentPostId.value}`, {
         method: 'PUT',
         credentials: 'include',
         body: formData
@@ -301,7 +299,7 @@ async function deletePost(id) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/posts/${id}`, {
+    const response = await fetch(`/api/posts/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -334,7 +332,7 @@ async function createCategory() {
   }
   
   try {
-    const response = await fetch(`${API_URL}/posts/categories`, {
+    const response = await fetch(`/api/posts/categories`, {
       method: 'POST',
       credentials: 'include',
       headers: {

@@ -7,7 +7,6 @@ const posts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-const API_URL = `/api`
 
 onMounted(async () => {
     await fetchRecentPosts();
@@ -15,7 +14,7 @@ onMounted(async () => {
 
 async function fetchRecentPosts() {
     try {
-        const response = await fetch(`${API_URL}/posts`);
+        const response = await fetch(`/api/posts`);
 
         if (response.ok) {
             const allPosts = await response.json();
@@ -29,7 +28,7 @@ async function fetchRecentPosts() {
     } catch (err) {
         console.error('Error fetching recent posts:', err);
 
-        error.value = err.message + `${API_URL}/posts`;
+        error.value = err.message + `/api/posts`;
 
     } finally {
         loading.value = false;

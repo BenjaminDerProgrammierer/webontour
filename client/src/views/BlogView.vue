@@ -18,8 +18,6 @@ const categories = ref([]);
 const route = useRoute();
 const router = useRouter();
 
-const API_URL = `/api`;
-const UPLOADS_URL = `/uploads`;
 
 onMounted(async () => {
   await fetchPosts();
@@ -79,7 +77,7 @@ function updateUrlParams() {
 async function fetchPosts() {
   try {
     // Add query parameters for filtering if needed
-    let url = `${API_URL}/posts`;
+    let url = `/api/posts`;
     const params = new URLSearchParams();
 
     if (route.query.category) {
@@ -243,7 +241,7 @@ function truncateContent(content, maxLength = 150) {
             v-if="post.attachments && post.attachments.some(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))"
             class="post-image">
             <img
-              :src="`${UPLOADS_URL}/${post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`"
+              :src="`/uploads/${post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`"
               :alt="post.title">
           </div>
           <div v-else class="post-image placeholder">

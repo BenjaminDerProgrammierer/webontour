@@ -14,15 +14,13 @@ const confirmPassword = ref('');
 const setupError = ref(null);
 const setupSuccess = ref(false);
 
-const API_URL = `/api`;
-
 onMounted(async () => {
   await checkSetupStatus();
 });
 
 async function checkSetupStatus() {
   try {
-    const response = await fetch(`${API_URL}/setup/status`, {
+    const response = await fetch(`/api/setup/status`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -77,7 +75,7 @@ async function handleSetup(event) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/setup/create-admin`, {
+    const response = await fetch(`/api/setup/create-admin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -11,7 +11,6 @@ const successMessage = ref('');
 const editingUserId = ref(null);
 const selectedRoleId = ref(null);
 
-const API_URL = `/api`;
 
 onMounted(async () => {
   await Promise.all([fetchUsers(), fetchRoles()]);
@@ -20,7 +19,7 @@ onMounted(async () => {
 
 async function fetchUsers() {
   try {
-    const response = await fetch(`${API_URL}/posts/admin/users`, {
+    const response = await fetch(`/api/posts/admin/users`, {
       credentials: 'include'
     });
     
@@ -37,7 +36,7 @@ async function fetchUsers() {
 
 async function fetchRoles() {
   try {
-    const response = await fetch(`${API_URL}/auth/roles`, {
+    const response = await fetch(`/api/auth/roles`, {
       credentials: 'include'
     });
     
@@ -71,7 +70,7 @@ async function updateUserRole(userId) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/auth/user/${userId}/role`, {
+    const response = await fetch(`/api/auth/user/${userId}/role`, {
       method: 'PUT',
       credentials: 'include',
       headers: {
