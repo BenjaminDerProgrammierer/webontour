@@ -12,16 +12,22 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_API_PROXY,
+          target: env.VITE_API_URL,
           changeOrigin: true,
           secure: false
         },
         '/uploads': {
-          target: env.VITE_API_PROXY,
+          target: env.VITE_API_URL,
           changeOrigin: true,
           secure: false
         }
       }
+    },
+    preview: {
+      allowedHosts: [
+        'webontour.eu',
+        'localhost'
+      ]
     }
   }
 })

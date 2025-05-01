@@ -26,8 +26,7 @@ onMounted(async () => {
     <section id="hero">
         <div class="magicpattern"></div>
         <h1>Welcome to WEBonTour</h1>
-        <p>Here you can follow our journeys around the globe. From Austria to Australia, here you can read our stories!
-        </p>
+        <p>Here you can follow our journeys around the globe. From Austria to Australia, here you can read our stories!</p>
         <div class="buttons">
             <router-link to="/blog" class="link-button primary">View Blog Posts</router-link>
             <router-link to="/about" class="link-button secondary bordered">More about us</router-link>
@@ -40,10 +39,6 @@ onMounted(async () => {
     <section id="recent">
         <h2 v-if="!apiError">Recent Posts</h2>
 
-        <!-- <div class="api-error" v-if="apiError">
-            <h2>Error</h2>
-            <p>Unable to connect to the backend server. Is it on?</p>
-        </div> -->
         <ErrorBox v-if="apiError" title="Error" message="Unable to connect to the backend server. Is it on?" />
 
         <div v-if="!apiError">
@@ -69,6 +64,7 @@ onMounted(async () => {
         <div class="footer-item">
             <h3>Contact Us</h3>
             <p>For inquiries, email us at <a href="mailto:info@webontour.eu">info@webontour.eu</a></p>
+            <p>This is v0-alpha-0.0.1</p>
         </div>
         <div class="footer-item">
             <h3>Quick Links</h3>

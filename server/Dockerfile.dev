@@ -1,0 +1,21 @@
+FROM node:lts-alpine
+
+# Install cURL (for health check)
+RUN apk add --no-cache curl
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies including dev dependencies
+RUN npm install
+
+# Environment
+ENV NODE_ENV=development
+ENV PORT=3000
+EXPOSE 3000
+
+# Default command for development (overridden in docker-compose)
+CMD ["npm", "run", "dev"]

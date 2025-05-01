@@ -1,0 +1,18 @@
+FROM node:lts-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Environment
+ENV NODE_ENV=development
+ENV PORT=8000
+EXPOSE 8000
+
+# Default command for development (overridden in docker-compose)
+CMD ["npm", "run", "dev"]

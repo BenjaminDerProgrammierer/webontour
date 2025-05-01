@@ -1,0 +1,76 @@
+# Development configuration
+services:
+  client:
+    image: benjaminderprogrammierer/webontour-client:dev
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    ports:
+      - '${CLIENT_PORT}:8000'
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - VITE_API_URL=http://server:${SERVER_PORT}
+    env_file:
+      - .env.local
+    container_name: webontour-client-dev
+    networks:
+      - webontour_network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: npm run dev
+
+  server:
+    image: benjaminderprogrammierer/webontour-server:dev
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - PORT=${SERVER_PORT}
+    env_file:
+      - .env.local
+    container_name: webontour-server-dev
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - webontour_network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - ./storage/attachments:/attachments
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT}/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: npm run dev
+
+  db:
+    image: postgres:latest
+    container_name: webontour-db
+    restart: always
+    env_file:
+      - .env.local
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./storage/data:/var/lib/postgresql/data
+    networks:
+      - webontour_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  webontour_network:
+    name: webontour-network
+    driver: bridge

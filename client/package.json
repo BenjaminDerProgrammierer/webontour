@@ -1,12 +1,12 @@
 {
-  "name": "summerproject-2025-client",
+  "name": "webontour-client",
   "version": "1.0.0",
-  "description": "Client application for the Summer Project 2025",
+  "description": "Client application for the WEBonTour Blogging System",
   "main": "index.html",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --port $PORT --host 0.0.0.0",
     "build": "vite build",
-    "serve": "vite preview",
+    "serve": "vite preview --port $PORT --host 0.0.0.0",
     "start": "npm run build && npm run serve"
   },
   "keywords": [
@@ -17,14 +17,13 @@
   "license": "GPLv3",
   "type": "module",
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.1",
-    "vite": "^6.2.0"
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.4"
   },
   "dependencies": {
-    "@vue/cli": "^5.0.8",
     "highlight.js": "^11.11.1",
-    "katex": "^0.16.21",
-    "lucide-vue-next": "^0.487.0",
+    "katex": "^0.16.22",
+    "lucide-vue-next": "^0.503.0",
     "markdown-it": "^14.1.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-deflist": "^3.0.0",
@@ -37,6 +36,6 @@
     "markdown-it-texmath": "^1.0.0",
     "mermaid": "^11.6.0",
     "vue": "^3.5.13",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.5.1"
   }
 }

@@ -1,0 +1,86 @@
+services:
+  client:
+    image: benjaminderprogrammierer/webontour-client:latest
+    build:
+      context: ./client
+      dockerfile: Dockerfile.prod
+    ports:
+      - '${CLIENT_PORT}:8000'
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - VITE_API_URL=http://server:${SERVER_PORT}
+    env_file:
+      - .env.local
+    container_name: webontour-client
+    # depends_on:
+    #   - server
+    networks:
+      - webontour_network
+  server:
+    image: benjaminderprogrammierer/webontour-server:latest
+    build:
+      context: ./server
+      dockerfile: Dockerfile.prod
+    # ports:
+    #   - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=${SERVER_PORT}
+    env_file:
+      - .env.local
+    container_name: webontour-server
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - webontour_network
+    volumes:
+      - ./storage/attachments:/attachments
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT}/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  db:
+    image: postgres:latest
+    container_name: webontour-db
+    restart: always
+    env_file:
+      - .env.local
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./storage/data:/var/lib/postgresql/data
+    networks:
+      - webontour_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  updater:
+    build: ./updater
+    container_name: webontour-updater
+    restart: unless-stopped
+    ports:
+      - "8009:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/mcserver/docker/webontour/summerproject-2025:/app/compose
+      - .env.local:/app/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - webhook-network
+
+networks:
+  webontour_network:
+    name: webontour-network
+    driver: bridge
+  webhook-network:
+    driver: bridge
