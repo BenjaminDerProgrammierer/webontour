@@ -11,6 +11,7 @@ import posts from './routes/posts.js';
 import setup from './routes/setup.js';
 import adminCrud from './routes/adminCrud.js';
 import initDB from './db/init-db.js';
+import fs from 'fs';
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -50,13 +51,27 @@ app.use(session({
   }
 }));
 
-app.use('/uploads', myStatic(join(__dirname, '../../attachments')));
+app.use('/uploads', myStatic(join(__dirname, '../attachments')));
 
 // Routes
 app.use('/api/auth', auth);
 app.use('/api/posts', posts);
 app.use('/api/setup', setup);
 app.use('/api/admin', adminCrud);
+
+
+// Serve static files from the documents directory
+app.get('/api/document/:filename', (req, res) => {
+  let { filename } = req.params;
+  filename = filename + ".md";
+  const filePath = join(__dirname, '../documents', filename);
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  }
+  else {
+    res.status(404).json({ message: 'File not found' });
+  }
+});
 
 // Simple health check route
 app.get('/api/health', (req, res) => {

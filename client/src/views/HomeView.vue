@@ -70,8 +70,8 @@ onMounted(async () => {
             <h3>Quick Links</h3>
             <ul class="footer-links">
                 <li><router-link to="/admin">Admin Dashboard</router-link></li>
-                <li><a href="/legal?srcMd=%2Fcontent%2Fterms.md">Terms of Service</a></li>
-                <li><a href="/legal?srcMd=%2Fcontent%2Fprivacy.md">Privacy Policy</a></li>
+                <li><a href="/document?f=tos">Terms of Service</a></li>
+                <li><a href="/document?f=privacy">Privacy Policy</a></li>
             </ul>
         </div>
     </footer>

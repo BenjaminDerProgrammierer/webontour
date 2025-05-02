@@ -37,6 +37,11 @@ const router = createRouter({
       path: '/sites',
       name: 'sitemap',
       component: () => import('./views/SiteMapView.vue')
+    },
+    {
+      path: '/document',
+      name: 'document',
+      component: () => import('./views/DocumentView.vue')
     }
   ]
 });
