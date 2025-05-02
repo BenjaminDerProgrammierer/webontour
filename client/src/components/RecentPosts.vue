@@ -82,7 +82,7 @@ async function fetchRecentPosts() {
     background-color: #c05050;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 800px) {
     #recent-post-list {
         flex-direction: row;
         flex-wrap: wrap;

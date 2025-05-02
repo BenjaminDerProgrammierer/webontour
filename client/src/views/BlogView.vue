@@ -279,9 +279,16 @@ function truncateContent(content, maxLength = 150) {
 
 <style scoped>
 .blog-view {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 30px;
+
+  background: rgb(255, 255, 255)
+    radial-gradient(
+      1124px 720px at 0% 0%,
+      rgb(222, 231, 248) 0%,
+      rgba(222, 231, 248, 0) 100%
+    )
+    no-repeat padding-box fixed;
 }
 
 h1 {
@@ -380,6 +387,8 @@ img {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .post-card {
@@ -480,7 +489,7 @@ img {
 }
 
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .posts-grid {
     grid-template-columns: 1fr;
   }

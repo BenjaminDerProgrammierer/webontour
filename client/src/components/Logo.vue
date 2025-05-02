@@ -1,10 +1,21 @@
 <!-- A Logo component for use on any Page. -->
 <template>
-    <a href="/" class="logo">
+    <a href="/" class="logo" :class="{ 'logo--inline': inline }">
         <img :src="`/icon/transparent.png`" alt="Logo">
         <span>WEBonTour</span>
     </a>
 </template>
+
+<script>
+export default {
+    props: {
+        inline: {
+            type: Boolean,
+            default: false
+        }
+    }
+}
+</script>
 
 <style scoped>
 .logo {
@@ -17,6 +28,13 @@
     color: black;
     text-decoration: none;
     font-size: min(3vw, 32px);
+}
+
+.logo--inline {
+    position: relative;
+    display: inline-flex;
+    top: auto;
+    left: auto;
 }
 
 .logo img {

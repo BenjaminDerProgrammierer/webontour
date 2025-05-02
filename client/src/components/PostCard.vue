@@ -194,7 +194,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
     max-width: 100%;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 800px) {
     .flip-container {
         width: calc(50% - 10px);
     }

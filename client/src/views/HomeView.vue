@@ -271,7 +271,7 @@ footer .footer-item ul.footer-links a:hover {
 }
 
 /* Responsive design */
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1100px) {
     section#recent {
         &>div {
             display: block;
@@ -308,7 +308,7 @@ footer .footer-item ul.footer-links a:hover {
     }
 }
 
-@media screen and (max-width: 798px) {
+@media screen and (max-width: 800px) {
     .flip-container {
         width: 100%;
     }
@@ -319,6 +319,10 @@ footer .footer-item ul.footer-links a:hover {
     }
 
     section#recent {
+        h2 {
+            text-align: center;
+        }
+
         &:has(.error) {
             padding: 0;
 

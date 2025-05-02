@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import UserManagement from '../components/UserManagement.vue';
 import AdminCrud from '../components/AdminCrud.vue';
+import Logo from '../components/Logo.vue';
 
 const router = useRouter();
 const posts = ref([]);
@@ -378,8 +379,9 @@ watch(() => selectedCategoryId.value, (newValue) => {
 </script>
 
 <template>
-  <div class="admin-view">
-    <h1>Admin Dashboard</h1>
+  <div class="admin-container">
+    <div class="admin-view">
+    <h1><Logo inline></Logo> <span class="head">Admin Dashboard</span></h1>
     
     <div v-if="loading" class="loading">
       Loading...
@@ -622,9 +624,26 @@ watch(() => selectedCategoryId.value, (newValue) => {
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <style>
+.logo {
+  color: white!important;
+}
+
+.admin-container {
+  background: rgb(3, 5, 18)
+    radial-gradient(
+      1124px 720px at 0% 0%,
+      rgb(41, 38, 47) 0%,
+      rgba(41, 38, 47, 0) 100%
+    )
+    no-repeat padding-box scroll;
+  height: 100vh;
+  width: 100vw;
+  color: white;
+}
 .admin-view {
   max-width: 1200px;
   margin: 0 auto;
@@ -634,6 +653,18 @@ watch(() => selectedCategoryId.value, (newValue) => {
 h1 {
   font-family: var(--heading-font-family);
   margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .head {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.posts-list {
+  color: black;
 }
 
 .loading {
@@ -648,6 +679,7 @@ h1 {
   padding: 20px;
   border-radius: 8px;
   background-color: #f8f8f8;
+  color: black;
 }
 
 .form-group {
@@ -732,6 +764,7 @@ h1 {
   padding: 20px;
   background-color: #f8f8f8;
   border-radius: 8px;
+  color: black;
 }
 
 .form-actions {
