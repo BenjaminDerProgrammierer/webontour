@@ -36,6 +36,9 @@ onMounted(async () => {
   await checkAuthStatus();
   if (isAuthenticated.value) {
     await Promise.all([fetchPosts(), fetchTags(), fetchCategories()]);
+  } else {
+    // Redirect to login if not authenticated
+    router.replace('/login');
   }
 });
 
@@ -83,37 +86,6 @@ async function checkAuthStatus() {
   }
 }
 
-async function login(event) {
-  event.preventDefault();
-  const username = event.target.username.value;
-  const password = event.target.password.value;
-  
-  try {
-    const response = await fetch(`/api/auth/login`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      currentUser.value = data.user;
-      isAuthenticated.value = true;
-      error.value = null;
-      await Promise.all([fetchPosts(), fetchTags(), fetchCategories()]);
-    } else {
-      const data = await response.json();
-      error.value = data.message || 'Login failed';
-    }
-  } catch (err) {
-    console.error('Login error:', err);
-    error.value = 'Login failed. Please try again.';
-  }
-}
-
 async function logout() {
   try {
     await fetch(`/api/auth/logout`, {
@@ -122,6 +94,7 @@ async function logout() {
     });
     isAuthenticated.value = false;
     currentUser.value = null;
+    router.replace('/login');
   } catch (err) {
     console.error('Logout error:', err);
   }
@@ -386,29 +359,8 @@ watch(() => selectedCategoryId.value, (newValue) => {
     <div v-if="loading" class="loading">
       Loading...
     </div>
-    
-    <div v-else-if="!isAuthenticated" class="login-form">
-      <h2>Login Required</h2>
-      <p>Please log in to access the admin dashboard.</p>
-      
-      <form @submit="login">
-        <div class="form-group">
-          <label for="username">Username:</label>
-          <input type="text" id="username" name="username" required>
-        </div>
-        
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-        
-        <div v-if="error" class="error-message">{{ error }}</div>
-        
-        <button type="submit" class="link-button primary">Login</button>
-      </form>
-    </div>
-    
-    <div v-else class="admin-dashboard">
+  
+    <div v-else-if="isAuthenticated" class="admin-dashboard">
       <div class="admin-header">
         <h2>Welcome to the Admin Dashboard</h2>
         <div class="user-info">
@@ -671,15 +623,6 @@ h1 {
   text-align: center;
   font-size: 1.2rem;
   margin: 50px 0;
-}
-
-.login-form {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #f8f8f8;
-  color: black;
 }
 
 .form-group {

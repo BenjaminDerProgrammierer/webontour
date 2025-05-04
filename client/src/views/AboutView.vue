@@ -1,45 +1,43 @@
 <script setup>
 import Logo from '../components/Logo.vue';
+import ImageGallery from '../components/ImageGallery.vue';
 </script>
 
 <template>
     <Logo />
-    <div class="unimplemented">
-        <h1>About</h1>
-        <p>The <code>About.vue</code> page not implemented yet.</p>
+    <div class="about">
+        <h1>About us</h1>
+        <!-- TODO -->
+        <p>Hier kommst später etwas mehr inhalt hin.</p>
+        <ImageGallery />
     </div>
 </template>
 
 <style>
-.unimplemented {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    font-size: 2em;
+.about {
+    margin-top: 5%;
+    font-size: 2rem;
     font-family: var(--heading-font-family);
     color: var(--color-secondary);
     padding: 0% 10%;
 
-    h2 {
-        font-size: 2rem;
+    h1 {
+        font-size: 3rem;
         font-family: var(--heading-font-family);
         color: var(--color-secondary);
         text-align: center;
     }
+}
 
-    p {
+@media (max-width: 800px) {
+    .about {
         font-size: 1.5rem;
-        font-family: var(--body-font-family);
-        color: var(--color-secondary);
-        text-align: center;
+        padding: 0% 5%;
     }
 
-    code {
-        font-size: 1em;
-        font-family: 'Courier New', Courier, monospace;
-        color: var(--color-primary);
+    h1 {
+        font-size: 2rem;
     }
+    
 }
 </style>
