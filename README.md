@@ -5,8 +5,8 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 ## Usage
 
 - Clone the repository
-- Run `[sudo] sudo docker compose -f docker-compose.dev.yml up` to start the development server.
-- Use `[sudo] sudo docker compose up -d` instead to start the server in detached mode.
+- Run `docker compose -f docker-compose.dev.yml up` to start the development server.
+- Use `docker compose up -d` instead to start the production server.
 
 ## Changelog
 
@@ -33,6 +33,10 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
   - The server pulls the new images and restarts the containers. (`updater` container)
   - The server is available behind a reverse proxy (nginx) with SSL.
   - Cookies work now (20 mins)
+- I added a document viewer for markdown files and legal documents (1 hr 3 mins)
+- I Added better backgrounds (0 hrs 27 mins)
+- I added a Slideshow (About page) (0 hrs 21 mins)
+- I made the `LoginView` page (will replace the old signup/admin-embedded login pages) (1 hrs 4 mins)
 
 ## Quick Links
 
@@ -40,6 +44,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - [Projektantrag](https://benjaminderprogrammierer.github.io/summerproject-2025/docs/Projektantrag/) (GitHub Pages, lives at `docs/Projektantrag.md`)
 - [Angabe](https://benjaminderprogrammierer.github.io/summerproject-2025/docs/1JHG-MEDTWT_Sommerprojekt_2425.pdf)
 - [Website home on webontour.eu](https://webontour.eu/)
+- [GitHub](https://github.com/BenjaminDerProgrammierer/summerproject-2025)
 
 ## Pages
 
@@ -58,7 +63,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - admin
 - setup
 - about
-- sitemap
+- sitemap (will be removed for production)
 
 ## todos
 
@@ -83,16 +88,31 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
   - user roles and permissions, user management
 - Post CRUD, editor for role 'writer', 'admin'
 - about page
-- footer content: social links, legal documents, quicklinks
-- responsive design
+- [X] footer content: social links, legal documents, quicklinks
 - dates
 - comments
   - unread comments page for admin
 - post printing
-- Dark mode
-- arrow on home back up, not moving all the tiome
-- More links
+- arrow on home back up, not moving all the time
 - login for users
+- flex-grow for any element
+- Fix admin colors
+
+### Tasks
+
+- [X] ein HTML Formular inkl. komplettem, passendem CSS-Design
+- [X] 1 CSS Animationen
+- [X] 1 CSS Transition
+- [X] 1 Einsatz von CSS Transform Parametern (scale, rotate, translate, ...)
+- [X] eine HTML Tabelle inkl. komplettem, passendem CSS-Design
+- [X] 1 CSS Gridsystem
+- [X] die kreative Positionierung von 2 freien Elementen mittels position (absolute/relative)
+- [X] Navigation mit KOMPLETT FUNKTIONIERENDEN Links (keine Umlaute!!!)
+- [X] Footer mit mehrspaltigem Layout umsetzen (-> z. B. Inspiration HTL Homepage)
+- [X] ansprechende CSS-Hintergründe auf ALLEN (!) Seiten
+- [X] Integration einer Bildergalerie ODER Bilderslideshow
+- [X] die GESAMTE Seite muss VOLLSTÄNDIG responsive umgesetzt werden (Startseite + Unterseiten)
+- ALLGEMEIN - ABWECHSLUNG! - Nicht jede Unterseite sieht genau gleich aus!
 
 ### ToDos to do later
 
@@ -100,6 +120,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - weather
 - category view - world map layout
 - Redis session storage
+- Dark mode
 
 ## CRUD admin interface for posts prompt
 
