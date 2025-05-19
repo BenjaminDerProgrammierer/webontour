@@ -1,3 +1,5 @@
+# App data is later mounted to /app (node modules aren't though, install a fresh version of them.)
+
 FROM node:lts-alpine
 
 # Set working directory

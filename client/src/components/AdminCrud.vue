@@ -4,6 +4,8 @@
  - Read - done
  - Update
  - Delete
+ 
+  - Classic CRUD admin interface for the whole database
 
  Additional features:
  - Search

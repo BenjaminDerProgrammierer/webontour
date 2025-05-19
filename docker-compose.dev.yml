@@ -2,24 +2,25 @@
 services:
   client:
     image: benjaminderprogrammierer/webontour-client:dev
+    container_name: webontour-client-dev
     build:
       context: ./client
       dockerfile: Dockerfile.dev
     ports:
-      - '${CLIENT_PORT}:8000'
+      - '${CLIENT_PORT}:${CLIENT_PORT}'
     environment:
       - NODE_ENV=development
-      - PORT=8000
+      - PORT=${CLIENT_PORT}
       - VITE_API_URL=http://server:${SERVER_PORT}
-    env_file:
-      - .env.local
-    container_name: webontour-client-dev
     networks:
       - webontour_network
     volumes:
       - ./client:/app
-      - /app/node_modules
-    command: npm run dev
+      - /app/node_modules # do not mount node_modules to avoid conflicts
+    command: npm run dev # Use dev command for development
+    depends_on:
+      server:
+        condition: service_healthy
 
   server:
     image: benjaminderprogrammierer/webontour-server:dev
@@ -30,7 +31,8 @@ services:
       - NODE_ENV=development
       - PORT=${SERVER_PORT}
     env_file:
-      - .env.local
+      - .env
+      # - .env.local
     container_name: webontour-server-dev
     depends_on:
       db:
@@ -53,7 +55,8 @@ services:
     container_name: webontour-db
     restart: always
     env_file:
-      - .env.local
+      - .env
+      # - .env.local
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}

@@ -1,129 +1,23 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
-const loading = ref(true);
-const error = ref(null);
-const needsSetup = ref(false);
-
-const username = ref('admin');
-const email = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-const setupError = ref(null);
-const setupSuccess = ref(false);
-
-onMounted(async () => {
-  await checkSetupStatus();
-});
-
-async function checkSetupStatus() {
-  try {
-    const response = await fetch(`/api/setup/status`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      needsSetup.value = data.needsSetup;
-      
-      if (!needsSetup.value) {
-        // Setup is already completed, redirect to login
-        router.replace('/admin');
-      }
-    } else {
-      error.value = 'Could not check setup status';
-    }
-  } catch (err) {
-    console.error('Error checking setup status:', err);
-    error.value = 'Failed to connect to the server';
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function handleSetup(event) {
-  event.preventDefault();
-  setupError.value = null;
-  
-  // Basic validation
-  if (!username.value || !email.value || !password.value) {
-    setupError.value = 'All fields are required';
-    return;
-  }
-  
-  if (password.value !== confirmPassword.value) {
-    setupError.value = 'Passwords do not match';
-    return;
-  }
-  
-  if (password.value.length < 8) {
-    setupError.value = 'Password must be at least 8 characters long';
-    return;
-  }
-  
-  // Simple email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.value)) {
-    setupError.value = 'Please enter a valid email address';
-    return;
-  }
-  
-  try {
-    const response = await fetch(`/api/setup/create-admin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        username: username.value,
-        email: email.value,
-        password: password.value
-      })
-    });
-    
-    if (response.ok) {
-      setupSuccess.value = true;
-      setTimeout(() => {
-        router.push('/admin');
-      }, 2000);
-    } else {
-      const data = await response.json();
-      setupError.value = data.message || 'Failed to create admin user';
-    }
-  } catch (err) {
-    console.error('Error during setup:', err);
-    setupError.value = 'Connection error';
-  }
-}
-</script>
-
 <template>
   <div class="setup-view">
-    <div v-if="loading" class="loading-container">
+    <div class="loading-container">
       <p>Checking system status...</p>
     </div>
     
-    <div v-else-if="error" class="error-container">
+    <div class="error-container">
       <h2>Error</h2>
       <p>{{ error }}</p>
       <button @click="checkSetupStatus" class="link-button primary">Retry</button>
     </div>
     
-    <div v-else-if="needsSetup" class="setup-container">
-      <div v-if="setupSuccess" class="success-message">
+    <div class="setup-container">
+      <div class="success-message">
         <h2>Setup Complete!</h2>
         <p>Admin account has been created successfully.</p>
         <p>Redirecting to admin panel...</p>
       </div>
       
-      <div v-else class="setup-form-container">
+      <div class="setup-form-container">
         <h1>WEBonTour Blog Setup</h1>
         <p>Welcome to your new blog! You need to create an admin user to get started.</p>
         
@@ -133,7 +27,6 @@ async function handleSetup(event) {
             <input 
               type="text" 
               id="username" 
-              v-model="username" 
               required
               placeholder="admin"
             >
@@ -144,7 +37,6 @@ async function handleSetup(event) {
             <input 
               type="email" 
               id="email" 
-              v-model="email" 
               required
               placeholder="your@email.com"
             >
@@ -155,7 +47,6 @@ async function handleSetup(event) {
             <input 
               type="password" 
               id="password" 
-              v-model="password" 
               required
               placeholder="Minimum 8 characters"
             >
@@ -166,13 +57,12 @@ async function handleSetup(event) {
             <input 
               type="password" 
               id="confirm-password" 
-              v-model="confirmPassword" 
               required
               placeholder="Re-enter your password"
             >
           </div>
           
-          <div v-if="setupError" class="error-message">
+          <div class="error-message">
             {{ setupError }}
           </div>
           
@@ -183,7 +73,7 @@ async function handleSetup(event) {
       </div>
     </div>
     
-    <div v-else class="already-setup">
+    <div class="already-setup">
       <h2>System is already set up</h2>
       <p>The blog has already been configured.</p>
       <router-link to="/admin" class="link-button primary">Go to Admin Panel</router-link>

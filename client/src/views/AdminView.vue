@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import UserManagement from '../components/UserManagement.vue';
 import AdminCrud from '../components/AdminCrud.vue';
@@ -52,7 +52,7 @@ async function checkAuthStatus() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (setupResponse.ok) {
       const setupData = await setupResponse.json();
       if (setupData.needsSetup) {
@@ -61,7 +61,7 @@ async function checkAuthStatus() {
         return;
       }
     }
-    
+
     // Continue with normal auth check
     const response = await fetch(`/api/auth/me`, {
       method: 'GET',
@@ -70,7 +70,7 @@ async function checkAuthStatus() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (response.ok) {
       const userData = await response.json();
       currentUser.value = userData;
@@ -105,7 +105,7 @@ async function fetchPosts() {
     const response = await fetch(`/api/posts`, {
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       posts.value = await response.json();
     } else {
@@ -118,10 +118,10 @@ async function fetchPosts() {
 
 async function fetchTags() {
   try {
-    const response = await fetch(`/api/posts/tags/all`, {
+    const response = await fetch(`/api/posts/tags`, {
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       availableTags.value = await response.json();
     } else {
@@ -134,10 +134,10 @@ async function fetchTags() {
 
 async function fetchCategories() {
   try {
-    const response = await fetch(`/api/posts/categories/all`, {
+    const response = await fetch(`/api/posts/categories`, {
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       availableCategories.value = await response.json();
     } else {
@@ -171,24 +171,24 @@ function editPost(post) {
   title.value = post.title;
   content.value = post.content;
   selectedCategoryId.value = post.category_id;
-  
+
   attachments.value = Array.isArray(post.attachments) ? post.attachments : [];
   attachmentsToRemove.value = [];
-  
+
   if (post.tags && Array.isArray(post.tags)) {
     selectedTags.value = post.tags.filter(tag => tag !== null);
   } else {
     selectedTags.value = [];
   }
-  
+
   // Scroll to form
   document.getElementById('post-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function toggleAttachmentRemoval(filename) {
-  const index = attachmentsToRemove.value.indexOf(filename);
+function toggleAttachmentRemoval(attachment) {
+  const index = attachmentsToRemove.value.indexOf(attachment);
   if (index === -1) {
-    attachmentsToRemove.value.push(filename);
+    attachmentsToRemove.value.push(attachment);
   } else {
     attachmentsToRemove.value.splice(index, 1);
   }
@@ -210,36 +210,36 @@ function removeTag(tag) {
 
 async function submitPost(event) {
   event.preventDefault();
-  
+
   const formData = new FormData();
   formData.append('title', title.value);
   formData.append('content', content.value);
-  
+
   // Append category ID if selected
   if (selectedCategoryId.value) {
     formData.append('category_id', selectedCategoryId.value);
   }
-  
+
   // Append files
   for (const file of selectedFiles.value) {
     formData.append('attachments', file);
   }
-  
+
   // Append tags
   for (const tag of selectedTags.value) {
     formData.append('tags', tag);
   }
-  
+
   // For edit mode, include attachments to remove
   if (formMode.value === 'edit' && attachmentsToRemove.value.length > 0) {
-    attachmentsToRemove.value.forEach(filename => {
-      formData.append('removeAttachments[]', filename);
-    });
+    for (const attachment of attachmentsToRemove.value) {
+      formData.append('removeAttachments', attachment);
+    }
   }
-  
+
   try {
     let response;
-    
+
     if (formMode.value === 'create') {
       response = await fetch(`/api/posts`, {
         method: 'POST',
@@ -253,12 +253,12 @@ async function submitPost(event) {
         body: formData
       });
     }
-    
+
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.message || `Failed to submit post: ${response.statusText}`);
     }
-    
+
     await Promise.all([fetchPosts(), fetchTags()]);
     resetForm();
   } catch (err) {
@@ -271,18 +271,18 @@ async function deletePost(id) {
   if (!confirm('Are you sure you want to delete this post?')) {
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/posts/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
-    
+
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.message || `Failed to delete post: ${response.statusText}`);
     }
-    
+
     await fetchPosts();
   } catch (err) {
     console.error('Error deleting post:', err);
@@ -304,7 +304,7 @@ async function createCategory() {
   if (!newCategory.value.trim()) {
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/posts/categories`, {
       method: 'POST',
@@ -314,7 +314,7 @@ async function createCategory() {
       },
       body: JSON.stringify({ name: newCategory.value.trim(), description: '' })
     });
-    
+
     if (response.ok) {
       const createdCategory = await response.json();
       availableCategories.value.push(createdCategory);
@@ -322,8 +322,8 @@ async function createCategory() {
       newCategory.value = '';
       showNewCategoryInput.value = false;
     } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create category');
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to create category');
     }
   } catch (err) {
     console.error('Error creating category:', err);
@@ -334,32 +334,22 @@ async function createCategory() {
 function toggleNewCategoryInput() {
   showNewCategoryInput.value = !showNewCategoryInput.value;
   if (showNewCategoryInput.value) {
+    // Focus the input after it's shown
     setTimeout(() => {
       document.getElementById('new-category-input').focus();
-    }, 100);
+    }, 0);
   }
 }
-
-// Watch for when selectedCategoryId changes to "new"
-watch(() => selectedCategoryId.value, (newValue) => {
-  if (newValue === 'new') {
-    // Show the new category input field
-    toggleNewCategoryInput();
-    // Reset the dropdown value
-    selectedCategoryId.value = null;
-  }
-});
 </script>
 
 <template>
+  <Logo />
+
   <div class="admin-container">
-    <div class="admin-view">
-    <h1><Logo inline></Logo> <span class="head">Admin Dashboard</span></h1>
-    
     <div v-if="loading" class="loading">
       Loading...
     </div>
-  
+
     <div v-else-if="isAuthenticated" class="admin-dashboard">
       <div class="admin-header">
         <h2>Welcome to the Admin Dashboard</h2>
@@ -369,296 +359,206 @@ watch(() => selectedCategoryId.value, (newValue) => {
           <button @click="logout" class="link-button secondary">Logout</button>
         </div>
       </div>
-      
+
       <div class="tabs">
-        <button 
-          @click="activeTab = 'posts'"
-          :class="{ active: activeTab === 'posts' }"
-          class="tab-button"
-        >
+        <button @click="activeTab = 'posts'" :class="{ active: activeTab === 'posts' }" class="tab-button">
           Manage Posts
         </button>
-        
-        <button 
-          v-if="isAdmin()"
-          @click="activeTab = 'users'"
-          :class="{ active: activeTab === 'users' }"
-          class="tab-button"
-        >
+
+        <button v-if="isAdmin()" @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }"
+          class="tab-button">
           Manage Users
         </button>
-        <button 
-          v-if="isAdmin()"
-          @click="activeTab = 'crud'"
-          :class="{ active: activeTab === 'crud' }"
-          class="tab-button"
-        >
-          Classic DB CRUD
+        <button v-if="isAdmin()" @click="activeTab = 'crud'" :class="{ active: activeTab === 'crud' }"
+          class="tab-button">
+          Advanced CRUD
         </button>
       </div>
-      
-      <div v-if="activeTab === 'posts'">
-        <!-- Post Form -->
-        <div id="post-form" class="post-form">
-          <h3>{{ formMode === 'create' ? 'Create New Post' : 'Edit Post' }}</h3>
-          
-          <form @submit="submitPost">
-            <div class="form-group">
-              <label for="title">Title:</label>
-              <input type="text" id="title" v-model="title" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="content">Content:</label>
-              <textarea id="content" v-model="content" rows="10" required></textarea>
-            </div>
-            
-            <!-- Category selection -->
-            <div class="form-group">
-              <label for="category">Category:</label>
-              <div class="category-input-container">
-                <select id="category" v-model="selectedCategoryId" class="category-select" v-if="!showNewCategoryInput">
-                  <option :value="null">-- Select a category --</option>
-                  <option v-for="category in availableCategories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                  </option>
-                  <option value="new" class="new-category-option">+ Create new category</option>
-                </select>
-                <div v-else class="new-category-input-group">
-                  <input 
-                    id="new-category-input"
-                    type="text" 
-                    v-model="newCategory" 
-                    placeholder="Enter new category name" 
-                    @keyup.enter="createCategory"
-                    class="new-category-input"
-                  >
-                  <div class="new-category-buttons">
-                    <button type="button" @click="createCategory" class="new-category-button create">Create</button>
-                    <button type="button" @click="toggleNewCategoryInput" class="new-category-button cancel">Cancel</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="files">Attachments:</label>
-              <input type="file" id="files" multiple @change="handleFileChange">
-              <small>Select multiple files if needed (5MB limit per file)</small>
-            </div>
-            
-            <!-- Current Attachments (Edit Mode) -->
-            <div v-if="formMode === 'edit' && attachments.length > 0" class="current-attachments">
-              <h4>Current Attachments</h4>
-              <div class="attachment-list">
-                <div 
-                  v-for="(attachment, index) in attachments" 
-                  :key="index" 
-                  class="attachment-item"
-                  :class="{ 'marked-remove': attachmentsToRemove.includes(attachment) }"
-                >
-                  <span class="filename">{{ attachment }}</span>
-                  <button 
-                    type="button" 
-                    @click="toggleAttachmentRemoval(attachment)"
-                    class="toggle-remove"
-                  >
-                    {{ attachmentsToRemove.includes(attachment) ? 'Keep' : 'Remove' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Tags -->
-            <div class="form-group">
-              <label>Tags:</label>
-              <div class="tag-selector">
-                <div class="selected-tags">
-                  <div v-for="(tag, index) in selectedTags" :key="index" class="tag-pill">
-                    {{ tag }}
-                    <button type="button" @click="removeTag(tag)" class="remove-tag">&times;</button>
-                  </div>
-                </div>
-                
-                <div class="tag-input">
-                  <input 
-                    type="text" 
-                    v-model="newTag" 
-                    placeholder="Enter a tag"
-                    @keyup.enter.prevent="addTag"
-                  >
-                  <button type="button" @click="addTag" class="add-tag">Add</button>
-                </div>
-                
-                <div v-if="availableTags.length > 0" class="available-tags">
-                  <div class="available-tags-title">Available Tags:</div>
-                  <div class="tags-list">
-                    <div 
-                      v-for="tag in availableTags" 
-                      :key="tag.id" 
-                      class="tag-pill small"
-                      @click="newTag = tag.name; addTag()"
-                    >
-                      {{ tag.name }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="form-actions">
-              <button type="submit" class="link-button primary">
-                {{ formMode === 'create' ? 'Create Post' : 'Update Post' }}
-              </button>
-              <button type="button" @click="resetForm" class="link-button secondary">Reset</button>
-            </div>
-          </form>
+
+      <div v-if="activeTab === 'posts'" class="tab-content posts-tab">
+        <div v-if="error" class="error-message">
+          {{ error }}
         </div>
-        
-        <!-- Posts List -->
-        <div class="posts-list">
-          <h3>Manage Posts</h3>
-          
-          <div v-if="posts.length === 0" class="no-posts">
-            No posts available.
+
+        <form id="post-form" @submit="submitPost" class="create-post-form">
+          <h3>{{ formMode === 'create' ? 'Create New Post' : 'Edit Post' }}</h3>
+
+          <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" v-model="title" required>
           </div>
-          
-          <div v-else class="posts-table-container">
-            <table class="posts-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Category</th>
-                  <th>Tags</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="post in posts" :key="post.id">
-                  <td>{{ post.title }}</td>
-                  <td>{{ post.author }}</td>
-                  <td>
-                    <div v-if="post.category_name" class="category-badge">
-                      {{ post.category_name }}
-                    </div>
-                    <span v-else class="no-category">No category</span>
-                  </td>
-                  <td>
-                    <div class="post-tags">
-                      <span v-for="(tag, index) in post.tags?.filter(t => t !== null)" :key="index" class="tag-pill small">
-                        {{ tag }}
-                      </span>
-                      <span v-if="!post.tags || post.tags.filter(t => t !== null).length === 0">
-                        No tags
-                      </span>
-                    </div>
-                  </td>
-                  <td>{{ new Date(post.created_at).toLocaleDateString() }}</td>
-                  <td class="actions">
-                    <button @click="editPost(post)" class="action-button edit">Edit</button>
-                    <button @click="deletePost(post.id)" class="action-button delete">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+          <div class="form-group">
+            <label for="content">Content:</label>
+            <textarea id="content" v-model="content" rows="10" required></textarea>
+            <small>Supports Markdown formatting</small>
+          </div>
+
+          <div class="form-group">
+            <label for="category">Category:</label>
+            <div class="category-selector">
+              <select id="category" v-model="selectedCategoryId">
+                <option :value="null">-- Select Category --</option>
+                <option v-for="category in availableCategories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+              <button type="button" @click="toggleNewCategoryInput" class="link-button secondary small">
+                {{ showNewCategoryInput ? 'Cancel' : 'New Category' }}
+              </button>
+            </div>
+
+            <div v-if="showNewCategoryInput" class="new-category-input">
+              <input type="text" id="new-category-input" v-model="newCategory" placeholder="Enter new category name"
+                @keyup.enter="createCategory">
+              <button type="button" @click="createCategory" class="link-button primary small">Add</button>
+            </div>
+          </div>
+
+          <!-- File Upload -->
+          <div class="form-group">
+            <label for="files">Attachments:</label>
+            <input type="file" id="files" multiple @change="handleFileChange">
+            <small>Select multiple files if needed (5MB limit per file)</small>
+          </div>
+
+          <!-- Current Attachments (Edit Mode) -->
+          <div v-if="formMode === 'edit' && attachments.length > 0" class="current-attachments">
+            <h4>Current Attachments</h4>
+            <div class="attachment-list">
+              <div v-for="attachment in attachments" :key="attachment.id" class="attachment-item"
+                :class="{ 'marked-remove': attachmentsToRemove.includes(attachment) }">
+                <span class="filename">{{ attachment.filename }}</span>
+                <button type="button" @click="toggleAttachmentRemoval(attachment)" class="toggle-remove">
+                  {{ attachmentsToRemove.includes(attachment) ? 'Keep' : 'Remove' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label for="tags">Tags:</label>
+            <div class="tag-selector">
+              <div class="selected-tags">
+                <span v-for="tag in selectedTags" :key="tag" class="tag">
+                  {{ tag }}
+                  <button type="button" @click="removeTag(tag)" class="remove-tag">&times;</button>
+                </span>
+              </div>
+              <div class="add-tag">
+                <input type="text" v-model="newTag" placeholder="Add a tag" @keyup.enter.prevent="addTag">
+                <button type="button" @click="addTag" class="link-button primary small">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="link-button primary">
+              {{ formMode === 'create' ? 'Create Post' : 'Update Post' }}
+            </button>
+            <button type="button" @click="resetForm" class="link-button secondary">Cancel</button>
+          </div>
+        </form>
+
+        <div class="post-lists">
+          <div class="posts-list">
+            <h3>Your Posts</h3>
+
+            <div v-if="posts.length === 0" class="no-posts">
+              No posts yet. Create one using the form above.
+            </div>
+
+            <div v-else class="post-cards">
+              <div v-for="post in posts.filter(p => p.author === currentUser?.username)" :key="post.id"
+                class="post-card">
+                <h4 class="post-title">{{ post.title }}</h4>
+                <div class="post-meta">
+                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString() }}</p>
+                  <p class="post-category" v-if="post.category_name">{{ post.category_name }}</p>
+                </div>
+                <div class="post-tags">
+                  <span v-for="tag in post.tags" :key="tag" class="post-tag">{{ tag }}</span>
+                </div>
+                <div class="post-actions">
+                  <a :href="`/post/${post.id}`" target="_blank" class="link-button small">View</a>
+                  <button @click="editPost(post)" class="link-button primary small">Edit</button>
+                  <button @click="deletePost(post.id)" class="link-button danger small">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="posts-list" v-if="isAdmin()">
+            <h3>Other's Posts</h3>
+
+            <div v-if="posts.length === 0" class="no-posts">
+              No posts from other users yet.
+            </div>
+
+            <div v-else class="post-cards">
+              <div v-for="post in posts.filter(p => p.author !== currentUser?.username)" :key="post.id"
+                class="post-card">
+                <h4 class="post-title">{{ post.title }}</h4>
+                <div class="post-meta">
+                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString() }}</p>
+                  <p class="post-category" v-if="post.category_name">{{ post.category_name }}</p>
+                </div>
+                <div class="post-tags">
+                  <span v-for="tag in post.tags" :key="tag" class="post-tag">{{ tag }}</span>
+                </div>
+                <div class="post-actions">
+                  <a :href="`/post/${post.id}`" target="_blank" class="link-button small">View</a>
+                  <button @click="editPost(post)" class="link-button primary small">Edit</button>
+                  <button @click="deletePost(post.id)" class="link-button danger small">Delete</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
-      <!-- User Management Tab (Admin only) -->
-      <div v-else-if="activeTab === 'users' && isAdmin()">
+
+      <div v-else-if="activeTab === 'users'" class="tab-content users-tab">
         <UserManagement />
       </div>
-      <div v-else-if="activeTab === 'crud' && isAdmin()">
+
+      <div v-else-if="activeTab === 'crud'" class="tab-content crud-tab">
         <AdminCrud />
       </div>
     </div>
-  </div>
+
+    <div v-else-if="!loading" class="not-authenticated">
+      <h2>Not Authenticated</h2>
+      <p>Please log in to access the admin dashboard.</p>
+      <router-link to="/login" class="link-button primary">Go to Login</router-link>
+    </div>
   </div>
 </template>
 
-<style>
-.logo {
-  color: white!important;
-}
-
-.admin-container {
-  background: rgb(3, 5, 18)
-    radial-gradient(
-      1124px 720px at 0% 0%,
-      rgb(41, 38, 47) 0%,
-      rgba(41, 38, 47, 0) 100%
-    )
-    no-repeat padding-box scroll;
-  height: 100vh;
-  width: 100vw;
-  color: white;
-}
-.admin-view {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h1 {
-  font-family: var(--heading-font-family);
-  margin-bottom: 30px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .head {
-    width: 100%;
-    text-align: center;
+<style scoped>
+.post-lists {
+  display: grid;
+  gap: 20px;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+  &>* {
+    height: 100%;
   }
 }
 
-.posts-list {
-  color: black;
+.admin-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
 }
 
-.loading {
+.loading,
+.not-authenticated {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
   text-align: center;
-  font-size: 1.2rem;
-  margin: 50px 0;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: inherit;
-}
-
-.error-message {
-  color: #f44336;
-  margin: 10px 0;
-}
-
-.link-button {
-  display: inline-block;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  background-color: #4CAF50;
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-  cursor: pointer;
 }
 
 .admin-header {
@@ -666,6 +566,11 @@ h1 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: #2c3e50;
 }
 
 .user-info {
@@ -679,280 +584,293 @@ h1 {
 }
 
 .role-badge {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  background-color: #eee;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
   text-transform: uppercase;
-  font-weight: 600;
 }
 
 .role-badge.admin {
-  background-color: #ffd700;
-  color: #333;
+  background-color: #2c3e50;
+  color: white;
 }
 
 .role-badge.moderator {
-  background-color: #20b2aa;
+  background-color: #3498db;
+  color: white;
+}
+
+.role-badge.writer {
+  background-color: #27ae60;
   color: white;
 }
 
 .role-badge.user {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: #95a5a6;
+  color: white;
 }
 
-.post-form {
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: #f8f8f8;
-  border-radius: 8px;
-  color: black;
-}
-
-.form-actions {
-  margin-top: 20px;
+.tabs {
   display: flex;
   gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-button.active {
+  background-color: #2c3e50;
+  color: white;
+  border-color: #2c3e50;
+}
+
+.tab-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.posts-tab {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 1000px) {
+  .posts-tab {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  grid-column: 1 / -1;
+}
+
+.create-post-form {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.create-post-form h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-group small {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.category-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.category-selector select {
+  flex: 1;
+}
+
+.new-category-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.new-category-input input {
+  flex: 1;
 }
 
 .current-attachments {
   margin: 15px 0;
 }
 
+.current-attachments h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .attachment-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 0;
+  padding: 5px 10px;
+  background-color: #f1f1f1;
+  border-radius: 4px;
 }
 
 .attachment-item.marked-remove {
+  background-color: #f8d7da;
   text-decoration: line-through;
-  opacity: 0.7;
 }
 
 .toggle-remove {
-  border: none;
   background: none;
-  color: #f44336;
+  border: none;
+  color: #dc3545;
   cursor: pointer;
-  font-weight: bold;
 }
 
 .tag-selector {
-  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .selected-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  background-color: #e1f5fe;
-  color: #0277bd;
-  border-radius: 16px;
-}
-
-.tag-pill.small {
-  font-size: 0.8rem;
-  padding: 2px 8px;
-}
-
-.remove-tag {
-  border: none;
-  background: none;
-  color: #f44336;
-  margin-left: 5px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.tag-input {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.tag-input input {
-  flex: 1;
-}
-
-.add-tag {
-  padding: 5px 10px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.available-tags {
-  margin-top: 10px;
-}
-
-.available-tags-title {
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 5px;
-}
-
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
   gap: 5px;
 }
 
-.tags-list .tag-pill {
+.tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e9ecef;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 12px;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: #495057;
+  margin-left: 5px;
   cursor: pointer;
+  font-size: 14px;
 }
 
-.posts-table-container {
-  overflow-x: auto;
+.add-tag {
+  display: flex;
+  gap: 10px;
 }
 
-.posts-table {
-  width: 100%;
-  border-collapse: collapse;
+.add-tag input {
+  flex: 1;
 }
 
-.posts-table th,
-.posts-table td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.posts-table th {
-  background-color: #f1f1f1;
-  font-weight: bold;
+.posts-list {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.posts-list h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.no-posts {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.post-cards {
+  display: grid;
+  gap: 15px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.post-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-title {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #6c757d;
+  font-size: 12px;
+  margin-bottom: 10px;
 }
 
 .post-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  margin-bottom: 10px;
 }
 
-.action-button {
-  margin-right: 5px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.action-button.edit {
-  background-color: #2196F3;
-  color: white;
-}
-
-.action-button.delete {
-  background-color: #f44336;
-  color: white;
-}
-
-.tabs {
-  display: flex;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 20px;
-}
-
-.tab-button {
-  padding: 10px 20px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s;
-}
-
-.tab-button:hover {
-  background-color: #f5f5f5;
-}
-
-.tab-button.active {
-  border-bottom-color: #4CAF50;
-  color: #4CAF50;
-}
-
-.category-select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: inherit;
-  background-color: white;
-}
-
-.category-badge {
-  display: inline-block;
+.post-tag {
+  background-color: #e9ecef;
   padding: 3px 8px;
-  background-color: var(--color-primary);
-  color: white;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  border-radius: 15px;
+  font-size: 12px;
 }
 
-.no-category {
-  color: #999;
-  font-style: italic;
-  font-size: 0.9rem;
-}
-
-.category-input-container {
+.post-actions {
   display: flex;
-  flex-direction: column;
-  width: 100%;
+  gap: 5px;
+  justify-content: flex-end;
 }
 
-.new-category-option {
-  font-weight: bold;
-  color: var(--color-primary);
-}
-
-.new-category-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.new-category-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: inherit;
-}
-
-.new-category-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.new-category-button {
+.link-button.small {
+  font-size: 12px;
   padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
 }
 
-.new-category-button.create {
-  background-color: var(--color-primary);
+.link-button.danger {
+  background-color: #dc3545;
   color: white;
 }
 
-.new-category-button.cancel {
-  background-color: #e0e0e0;
-  color: #333;
+.link-button.danger:hover {
+  background-color: #c82333;
 }
 </style>

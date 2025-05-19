@@ -1,9 +1,9 @@
 <!-- A Logo component for use on any Page. -->
 <template>
-    <a href="/" class="logo" :class="{ 'logo--inline': inline }">
+    <router-link to="/" class="logo" :class="{ 'logo--inline': inline }">
         <img :src="`/icon/transparent.png`" alt="Logo">
         <span>WEBonTour</span>
-    </a>
+    </router-link>
 </template>
 
 <script>

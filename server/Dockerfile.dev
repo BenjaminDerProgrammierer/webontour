@@ -12,6 +12,9 @@ COPY package*.json ./
 # Install dependencies including dev dependencies
 RUN npm install
 
+# Application files are mounted to /app later
+
+
 # Environment
 ENV NODE_ENV=development
 ENV PORT=3000

@@ -107,13 +107,13 @@ function filterByCategory(category) {
         <div class="attachments-gallery">
           <div v-for="(attachment, index) in post.attachments.filter(a => a !== null)" :key="index" class="attachment">
 
-            <img :src="`/uploads/${attachment}`" :alt="`Attachment ${index + 1}`"
-              v-if="attachment.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="popupAttachment = attachment" />
+            <img :src="`/uploads/${attachment.filename}`" :alt="`Attachment ${index + 1}`"
+              v-if="attachment.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="popupAttachment = attachment" />
 
             <a :href="`/uploads/${attachment}`" target="_blank" v-else>
               <div class="file-attachment">
                 <span class="material-symbols-outlined">description</span>
-                <span>{{ attachment.substring('attachments-'.length) }}</span>
+                <span>{{ attachment.filename.substring('attachments-'.length) }}</span>
               </div>
             </a>
           </div>
@@ -126,7 +126,7 @@ function filterByCategory(category) {
 
       <div id="image-popup" v-if="popupAttachment">
         <div class="popup-content">
-          <img :src="`/uploads/${popupAttachment}`" :alt="`Attachment ${popupAttachment.substring('attachments-'.length)}`" />
+          <img :src="`/uploads/${popupAttachment.filename}`" :alt="`Attachment ${popupAttachment.filename.substring('attachments-'.length)}`" />
           <button class="close-button" @click="popupAttachment = null">Close</button>
         </div>
       </div>

@@ -1,9 +1,15 @@
-import { Router } from 'express';
-const router = Router();
+import express from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../db/db.js';
+import jwt from 'jsonwebtoken';
 
-// Check if initial setup is required (no users exist)
+const router = express.Router();
+
+/**
+ * @route   GET /api/setup/status
+ * @desc    Check if initial setup is required (no users exist)
+ * @access  Public
+ */
 router.get('/status', async (req, res) => {
   try {
     const result = await query('SELECT COUNT(*) FROM users');
@@ -15,7 +21,11 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// Create initial admin user
+/**
+ * @route   POST /api/setup/create-admin
+ * @desc    Create initial admin user
+ * @access  Public (only works when no users exist)
+ */
 router.post('/create-admin', async (req, res) => {
   try {
     const { username, password, email } = req.body;
@@ -62,9 +72,24 @@ router.post('/create-admin', async (req, res) => {
     req.session.userId = result.rows[0].id;
     req.session.role = 'admin';
     
+    // Create JWT token
+    const payload = {
+      id: result.rows[0].id,
+      username: result.rows[0].username,
+      role: 'admin'
+    };
+
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+    
     res.status(201).json({ 
+      token,
       message: 'Admin user created successfully',
       user: {
+        id: userWithRole.rows[0].id,
         username: userWithRole.rows[0].username,
         email: userWithRole.rows[0].email,
         role: userWithRole.rows[0].role

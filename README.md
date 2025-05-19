@@ -38,6 +38,14 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - I added a Slideshow (About page) (0 hrs 21 mins)
 - I made the `LoginView` page (will replace the old signup/admin-embedded login pages) (1 hrs 4 mins)
 
+### Project Sprint 4
+
+- I optimized the API (And updated the frontend to use the now API) (2 hrs 5 mins)
+- I added a Swagger UI page for the API (0 hrs 56 mins)
+- I added User Management and made the new login page replace the old pages (3 hrs 17 mins
+)
+- I added a new admin page (0 hrs 56 mins)
+
 ## Quick Links
 
 - [Figma File](https://www.figma.com/design/hmDD1XXnwGYYxYCjo0U45Q/Summer-Project-2025)
@@ -45,25 +53,6 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - [Angabe](https://benjaminderprogrammierer.github.io/summerproject-2025/docs/1JHG-MEDTWT_Sommerprojekt_2425.pdf)
 - [Website home on webontour.eu](https://webontour.eu/)
 - [GitHub](https://github.com/BenjaminDerProgrammierer/summerproject-2025)
-
-## Pages
-
-- home
-  - RecentPosts
-    - PostCard
-  - Logo
-  - LatestCategories
-  - ErrorBox
-- blog
-  - Logo
-  - ErrorBox
-- post
-  - MarkdownRenderer
-  - ErrorBox
-- admin
-- setup
-- about
-- sitemap (will be removed for production)
 
 ## todos
 
@@ -83,9 +72,8 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 ### ToDos to do now
 
 - structure admin panel
-  - CRUD admin interface for posts and users
-  - Classic CRUD admin interface for the whole database
-  - user roles and permissions, user management
+  - Advanced admin CRUD (whole DB)
+  - [X] user roles and permissions, user management
 - Post CRUD, editor for role 'writer', 'admin'
 - about page
 - [X] footer content: social links, legal documents, quicklinks
@@ -97,6 +85,13 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - login for users
 - flex-grow for any element
 - Fix admin colors
+- popup for image gallery
+- handle no posts at hope page
+- fix admin ui
+- user no admin ui
+- do not save plaintext passwords in the database
+- attachment deletion
+- tag naming on admin panel
 
 ### Tasks
 
@@ -140,3 +135,20 @@ Implement a CRUD admin interface for the posts. Display all posts in a styled ta
 | `DB_PORT` | database port (Default: `5432`) |
 | `WEBHOOK_SECRET` | secret for the webhook |
 | `DOCKER_SOCKET_PATH` | path to the Docker socket (Default: `/var/run/docker.sock`) |
+
+## Architecture / Execution overview
+
+### Client
+
+- Image name: `benjaminderprogrammierer/webontour-client` (`dev` and `latest` tags)
+- Container name: `webontour-client` (or `-dev` for developemnt)
+- Connected with DB and Server in a network
+- Depends on a healthy backend
+- Build files are in `client/Dockerfile{.prod,.dev}`
+- `CLIENT_PORT` is passed through to the host
+- `NODE_ENV` is set, `PORT` is set to `CLIENT_PORT` and `VITE_API_URL` is set to the backend server.
+- In development, the `client` directory without the node modules is mapped to the app directory of the docker container.
+- Using the dev and start scripts for development and production, respectivly
+- The development server is a hot reloading vite instance, we use vite to build, and nginx to serve the application (and proxy the backend)
+
+### Server

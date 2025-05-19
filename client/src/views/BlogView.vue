@@ -86,6 +86,17 @@ async function fetchPosts() {
     if (route.query.tag) {
       params.append('tag', route.query.tag);
     }
+    if (route.query.author) {
+      params.append('author', route.query.author);
+    }
+    
+    // Add pagination if needed in the future
+    if (route.query.limit) {
+      params.append('limit', route.query.limit);
+    }
+    if (route.query.offset) {
+      params.append('offset', route.query.offset);
+    }
 
     // Append query parameters if they exist
     if (params.toString()) {
@@ -207,9 +218,9 @@ function truncateContent(content, maxLength = 150) {
         <div v-if="tags.length > 0" class="tags-filter">
           <h2>Filter by Tag</h2>
           <div class="tags-list">
-            <button v-for="tag in tags" :key="tag" @click="filterByTag(tag)"
-              :class="['tag-filter-btn', { active: selectedTag === tag }, 'filter-btn']">
-              {{ tag }}
+            <button v-for="tag in tags" :key="typeof tag === 'object' ? tag.id : tag" @click="filterByTag(typeof tag === 'object' ? tag.name : tag)"
+              :class="['tag-filter-btn', { active: selectedTag === (typeof tag === 'object' ? tag.name : tag) }, 'filter-btn']">
+              {{ typeof tag === 'object' ? tag.name : tag }}
             </button>
           </div>
           <button v-if="selectedTag" @click="selectedTag = ''" class="tag-filter-btn filter-btn clear">
@@ -221,13 +232,13 @@ function truncateContent(content, maxLength = 150) {
       <div v-if="filteredPosts.length === 0" class="no-posts">
         <p>
           <template v-if="selectedCategory && selectedTag">
-            No posts with category "{{ selectedCategory }}" and tag "{{ selectedTag }}".
+            No posts with category "{{ selectedCategory }}" and tag "{{ typeof selectedTag === 'object' ? selectedTag.name : selectedTag }}".
           </template>
           <template v-else-if="selectedCategory">
             No posts with category "{{ selectedCategory }}".
           </template>
           <template v-else-if="selectedTag">
-            No posts with tag "{{ selectedTag }}".
+            No posts with tag "{{ typeof selectedTag === 'object' ? selectedTag.name : selectedTag }}".
           </template>
           <template v-else>
             No posts available yet.
@@ -238,10 +249,10 @@ function truncateContent(content, maxLength = 150) {
       <div v-else class="posts-grid">
         <div v-for="post in filteredPosts" :key="post.id" class="post-card">
           <div
-            v-if="post.attachments && post.attachments.some(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))"
+            v-if="post.attachments && post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i))"
             class="post-image">
             <img
-              :src="`/uploads/${post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`"
+              :src="`/uploads/${post.attachments.find(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).filename}`"
               :alt="post.title">
           </div>
           <div v-else class="post-image placeholder">
@@ -262,8 +273,9 @@ function truncateContent(content, maxLength = 150) {
               </span>
 
               <span v-if="post.tags && post.tags.filter(t => t !== null).length > 0"
-                v-for="tag in post.tags.filter(t => t !== null)" :key="tag" class="tag-pill" @click="filterByTag(tag)">
-                {{ tag }}
+                v-for="tag in post.tags.filter(t => t !== null)" :key="typeof tag === 'object' ? tag.id : tag" class="tag-pill" 
+                @click="filterByTag(typeof tag === 'object' ? tag.name : tag)">
+                {{ typeof tag === 'object' ? tag.name : tag }}
               </span>
             </div>
 
@@ -289,6 +301,8 @@ function truncateContent(content, maxLength = 150) {
       rgba(222, 231, 248, 0) 100%
     )
     no-repeat padding-box fixed;
+  height: max(100vh, max-content);
+  overflow: hidden;
 }
 
 h1 {

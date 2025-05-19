@@ -26,7 +26,7 @@ onMounted(async () => {
     <section id="hero">
         <div class="magicpattern"></div>
         <h1>Welcome to WEBonTour</h1>
-        <p>Here you can follow our journeys around the globe. From Austria to Australia, here you can read our stories!</p>
+        <p>Here you can follow our journeys around the globe. From Austria to Australia and the whole world, here you can read our stories!</p>
         <div class="buttons">
             <router-link to="/blog" class="link-button primary">View Blog Posts</router-link>
             <router-link to="/about" class="link-button secondary bordered">More about us</router-link>

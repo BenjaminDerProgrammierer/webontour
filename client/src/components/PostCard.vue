@@ -1,40 +1,44 @@
 <script setup>
 
 const props = defineProps({
-  post: {
-    type: Object,
-    required: true
-  }
+    post: {
+        type: Object,
+        required: true
+    }
 });
 
 
 // Function to format date
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
 }
 
 // Function to truncate content
 function truncateContent(content, maxLength = 100) {
-  if (!content || content.length <= maxLength) return content;
-  return content.substring(0, maxLength) + '...';
+    if (!content || content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
 }
 
 // Check if post has a valid image
 function hasValidImage() {
-  return props.post.attachments && props.post.attachments.some(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+    const hasAttachmant =props.post.attachments && props.post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i))
+    if (hasAttachmant) {
+        return props.post.attachments.find(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).filename;
+    }
+    return false;
 }
 
 // Get image from post attachments or use placeholder
 function getPostImage() {
-  if (hasValidImage()) {
-    return `/uploads/${props.post.attachments.find(a => a !== null && a.match(/\.(jpeg|jpg|gif|png|webp)$/i))}`;
-  }
-  // Fallback to placeholder image
-  return `https://picsum.photos/900/600?random=${Math.floor(Math.random() * 1000)}`;
+    if (hasValidImage()) {
+        return `/uploads/${hasValidImage()}`;
+    }
+    // Fallback to placeholder image
+    return `https://picsum.photos/900/600?random=${Math.floor(Math.random() * 1000)}`;
 }
 
 const postImage = getPostImage();
@@ -61,7 +65,8 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
                         <span class="date">{{ formatDate(post.created_at) }}</span>
                     </div>
                     <p class="single-line">{{ truncateContent(post.content) }}</p>
-                    <router-link :to="`/post/${post.id}`" class="link-button secondary read-more">Read More</router-link>
+                    <router-link :to="`/post/${post.id}`" class="link-button secondary read-more">Read
+                        More</router-link>
                 </div>
             </div>
         </div>
@@ -85,7 +90,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
     &:hover .front {
         z-index: 1;
     }
-    
+
     &.no-flip:hover .post {
         transform: rotateY(0deg);
     }
@@ -103,7 +108,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.5s ease;
-    
+
     &.no-flip {
         transform: rotateY(0deg);
     }
@@ -123,7 +128,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
 
 .front {
     z-index: 2;
-    background-color: white;              
+    background-color: white;
 
     & .post-preview {
         width: 100%;
@@ -141,7 +146,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 |
     display: flex;
     flex-direction: column;
     gap: 20px;
-    
+
     &.show-back {
         transform: rotateY(0deg);
         z-index: 3;
