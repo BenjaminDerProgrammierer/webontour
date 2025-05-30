@@ -1,22 +1,38 @@
-FROM node:20-alpine
+FROM node:lts-alpine AS builder
 
+# Set the working directory
 WORKDIR /app
 
-# Install Docker CLI
-RUN apk add --no-cache docker-cli docker-compose
-
-# Copy package files and install dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
+# Copy the rest of the application code
 COPY . .
 
-# Build TypeScript to JavaScript
+# Build the application
 RUN npm run build
 
-# Expose the server port
+# Use a smaller image for the final build
+FROM node:lts-alpine
+
+# Install docker cli
+RUN apk add --no-cache docker-cli
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built application from the builder stage
+COPY --from=builder /app/dist ./dist
+
+# Copy the package.json and package-lock.json files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Start the server
-CMD ["node", "dist/index.js"]
+# Start the application
+CMD ["npm", "run", "start:prod"]
