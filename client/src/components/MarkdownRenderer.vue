@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, h, createApp } from 'vue';
 import markdownit from 'markdown-it';
 import markdownItTaskLists from 'markdown-it-task-lists';

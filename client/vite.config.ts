@@ -22,12 +22,6 @@ export default defineConfig(({ mode }) => {
           secure: false
         }
       }
-    },
-    preview: {
-      allowedHosts: [
-        'webontour.eu',
-        'localhost'
-      ]
     }
   }
 })

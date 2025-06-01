@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import router from '../router';
 
@@ -14,37 +14,15 @@ const signupKey = ref('');
 const confirmPassword = ref('');
 
 const loginError = ref('');
-const signupError = ref('');
-const setupError = ref(null);
+const signupError = ref<string>('');
+const setupError = ref<string | null>(null);
 
-const error = ref(null);
+const error = ref<string | null>(null);
 
 onMounted(async () => {
   // check if already logged in
   await checkSetupStatus();
 });
-
-// Check if the user is logged in
-async function checkLoginStatus() {
-  try {
-    const response = await fetch(`/api/auth/me`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  if (response.ok) {
-    const data = await response.json();
-    if (data.user) {
-      router.push('/admin');
-    }
-  }
-  } catch (err) {
-    console.error('Error checking login status:', err);
-    error.value = 'Failed to connect to the server';
-  }
-}
 
 // Check if the app needs setup
 async function checkSetupStatus() {
@@ -70,10 +48,11 @@ async function checkSetupStatus() {
 }
 
 // Try to login the user
-async function login(event) {
+async function login(event: Event) {
   event.preventDefault();
-  const username = event.target.username.value;
-  const password = event.target.password.value;
+  const target = event.target as HTMLFormElement;
+  const username = target.username.value;
+  const password = target.password.value;
 
   try {
     const response = await fetch(`/api/auth/login`, {
@@ -101,9 +80,9 @@ async function login(event) {
 }
 
 // Try to signup the user
-async function signup(event) {
+async function signup(event: Event) {
   event.preventDefault();
-  signupError.value = null;
+  signupError.value = '';
   
   // Basic validation
   if (!user.value || !email.value || !password.value) {
@@ -128,7 +107,7 @@ async function signup(event) {
     return;
   }
   
-    console.log('Creating user:', {
+  console.log('Creating user:', {
     username: user.value,
     email: email.value,
     password: password.value,
@@ -143,7 +122,7 @@ async function signup(event) {
       },
       credentials: 'include',
       body: JSON.stringify({
-        username: username.value,
+        username: user.value,
         email: email.value,
         password: password.value,
         masterKey: signupKey.value
@@ -165,7 +144,7 @@ async function signup(event) {
 }
 
 // Try to setup the admin user
-async function setup(event) {
+async function setup(event: Event) {
   event.preventDefault();
   setupError.value = null;
   
@@ -200,7 +179,7 @@ async function setup(event) {
       },
       credentials: 'include',
       body: JSON.stringify({
-        username: username.value,
+        username: user.value,
         email: email.value,
         password: password.value
       })

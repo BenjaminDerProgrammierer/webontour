@@ -1,6 +1,11 @@
+<!-- unused -->
+<script setup lang="ts">
+import Logo from './Logo.vue';
+</script>
+
 <template>
     <nav id="navbar">
-        <Logo />
+        <Logo inline="true"/>
         <div class="right">
             <ul>
                 <li><a href="/">Home</a></li>

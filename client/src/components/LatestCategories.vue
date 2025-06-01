@@ -1,11 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
-const categories = ref([]);
+const categories = ref<Category[]>([]);
 const loading = ref(true);
 const error = ref(null);
 const router = useRouter();
+
+interface Category {
+    id: number;
+    name: string;
+}
 
 onMounted(async () => {
     await fetchCategories();
@@ -22,7 +27,7 @@ async function fetchCategories() {
         } else {
             throw new Error('Failed to fetch categories');
         }
-    } catch (err) {
+    } catch (err: any) {
         console.error('Error fetching categories:', err);
         error.value = err.message;
     } finally {
@@ -30,7 +35,7 @@ async function fetchCategories() {
     }
 }
 
-function goToCategory(category) {
+function goToCategory(category: Category) {
     router.push({
         path: '/blog',
         query: { category: category.name }

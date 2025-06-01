@@ -1,6 +1,6 @@
-# App data is later mounted to /app (node modules aren't though, install a fresh version of them.)
-
 FROM node:lts-alpine
+
+# App data is later mounted to /app (node modules aren't though, install a fresh version of them.)
 
 # Set working directory
 WORKDIR /app
@@ -16,5 +16,5 @@ ENV NODE_ENV=development
 ENV PORT=8000
 EXPOSE 8000
 
-# Default command for development (overridden in docker-compose)
+# Default command for development
 CMD ["npm", "run", "dev"]

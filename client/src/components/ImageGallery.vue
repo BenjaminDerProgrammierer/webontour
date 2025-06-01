@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 
 const images = ref([
@@ -14,12 +14,25 @@ const images = ref([
     '2023-08-06_grcam_0003.jpg',
     '2023-08-08_eva_0025.jpg',
 ]);
+
+const lightboxVisible = ref(false);
+const lightboxIndex = ref(0);
+
+const openLightbox = (index: number) => {
+    lightboxIndex.value = index;
+    lightboxVisible.value = true;
+};
+
 </script>
 
 <template>
     <div class="image-gallery">
         <img v-for="(image, index) in images" :key="index" :src="`/assets/images/slides/${image}`"
-            :alt="(index + 1)" />
+            :alt="String(index + 1)" v-on:click="openLightbox(index)" />
+    </div>
+    <div class="lightbox" v-if="lightboxVisible">
+        <span class="close" @click="lightboxVisible = false">&times;</span>
+        <img :src="`/assets/images/slides/${images[lightboxIndex]}`" :alt="`Popup ${lightboxIndex + 1}`" />
     </div>
 </template>
 
@@ -47,6 +60,34 @@ const images = ref([
         }
     }
 }
+
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+        width: 80%;
+        max-height: 80%;
+    }
+
+    .close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+}
+
 
 @media (max-width: 800px) {
     .image-gallery {

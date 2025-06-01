@@ -1,10 +1,9 @@
 <!-- Display all sites in the router in a list -->
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router';
+
 // get all routes from the router
-const router = useRouter();
-const allRoutes = router.getRoutes();
-console.log(allRoutes);
+const allRoutes = useRouter().getRoutes();
 </script>
 
 <template>

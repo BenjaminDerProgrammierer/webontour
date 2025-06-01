@@ -14,6 +14,7 @@ import yaml from 'js-yaml';
 import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
 import setupRoutes from './routes/setup.js';
+import adminRoutes from './routes/admin.js';
 
 // Import database init function
 import initDB from './db/init-db.js';
@@ -108,6 +109,7 @@ async function startServer() {
     app.use('/api/auth', authRoutes);
     app.use('/api/posts', postsRoutes);
     app.use('/api/setup', setupRoutes);
+    app.use('/api/admin', adminRoutes);
     
     // Serve static files from the documents directory
     app.get('/api/document/:filename', (req, res) => {

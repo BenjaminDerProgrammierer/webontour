@@ -1,20 +1,48 @@
-<!-- TODO:
-- pagination
--->
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Logo from '../components/Logo.vue';
 import ErrorBox from '../components/ErrorBox.vue';
 
-const posts = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const selectedTag = ref('');
-const selectedCategory = ref('');
-const tags = ref([]);
-const categories = ref([]);
+// Define interfaces for our data structures
+interface Attachment {
+  id: number;
+  filename: string;
+  originalname: string;
+  size: number;
+  mimetype: string;
+}
+
+interface TagObject {
+  id: string | number;
+  name: string;
+}
+
+type TagType = string | TagObject;
+
+interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  author: string;
+  created_at: string;
+  updated_at: string;
+  published: boolean;
+  attachments: Attachment[];
+  category_id?: number;
+  category_name?: string;
+  tags?: TagType[];
+}
+
+const posts = ref<Post[]>([]);
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
+const selectedTag = ref<string>('');
+const selectedCategory = ref<string>('');
+const tags = ref<TagType[]>([]);
+const categories = ref<string[]>([]);
 const route = useRoute();
 const router = useRouter();
 
@@ -25,21 +53,21 @@ onMounted(async () => {
   extractCategories();
 
   // Check for tag or category in URL params on initial load
-  if (route.query.tag) {
+  if (route.query.tag && typeof route.query.tag === 'string') {
     selectedTag.value = route.query.tag;
   }
-  if (route.query.category) {
+  if (route.query.category && typeof route.query.category === 'string') {
     selectedCategory.value = route.query.category;
   }
 });
 
 // Watch for changes in route query parameters
 watch(() => route.query.tag, (newTagValue) => {
-  selectedTag.value = newTagValue || '';
+  selectedTag.value = typeof newTagValue === 'string' ? newTagValue : '';
 }, { immediate: true });
 
 watch(() => route.query.category, (newCategoryValue) => {
-  selectedCategory.value = newCategoryValue || '';
+  selectedCategory.value = typeof newCategoryValue === 'string' ? newCategoryValue : '';
 }, { immediate: true });
 
 // Also watch selectedTag and selectedCategory to update the URL
@@ -55,7 +83,7 @@ watch(() => selectedCategory.value, (newCategory) => {
   }
 });
 
-function updateUrlParams() {
+function updateUrlParams(): void {
   // Use the imported router instance directly instead of trying to extract it from route
   const query = { ...route.query };
 
@@ -81,21 +109,21 @@ async function fetchPosts() {
     const params = new URLSearchParams();
 
     if (route.query.category) {
-      params.append('category', route.query.category);
+      params.append('category', typeof route.query.category === 'string' ? route.query.category : '');
     }
     if (route.query.tag) {
-      params.append('tag', route.query.tag);
+      params.append('tag', typeof route.query.tag === 'string' ? route.query.tag : '');
     }
     if (route.query.author) {
-      params.append('author', route.query.author);
+      params.append('author', typeof route.query.author === 'string' ? route.query.author : '');
     }
     
     // Add pagination if needed in the future
     if (route.query.limit) {
-      params.append('limit', route.query.limit);
+      params.append('limit', typeof route.query.limit === 'string' ? route.query.limit : '');
     }
     if (route.query.offset) {
-      params.append('offset', route.query.offset);
+      params.append('offset', typeof route.query.offset === 'string' ? route.query.offset : '');
     }
 
     // Append query parameters if they exist
@@ -110,7 +138,7 @@ async function fetchPosts() {
     } else {
       throw new Error('Failed to fetch posts');
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error fetching posts:', err);
     // Provide a friendly error message when the backend is down
     if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
@@ -125,31 +153,31 @@ async function fetchPosts() {
 
 function extractTags() {
   // Extract unique tags from all posts
-  const tagSet = new Set();
+  const tagSet = new Set<TagType>();
   posts.value.forEach(post => {
     post.tags?.forEach(tag => {
       if (tag !== null) tagSet.add(tag);
     });
   });
-  tags.value = Array.from(tagSet).sort();
+  tags.value = Array.from(tagSet).sort() as TagType[];
 }
 
 function extractCategories() {
   // Extract unique categories from all posts
-  const categorySet = new Set();
+  const categorySet = new Set<string>();
   posts.value.forEach(post => {
     if (post.category_name && post.category_name !== null) {
       categorySet.add(post.category_name);
     }
   });
-  categories.value = Array.from(categorySet).sort();
+  categories.value = Array.from(categorySet).sort() as string[];
 }
 
-function filterByTag(tag) {
+function filterByTag(tag: string) {
   selectedTag.value = tag === selectedTag.value ? '' : tag;
 }
 
-function filterByCategory(category) {
+function filterByCategory(category: string) {
   selectedCategory.value = category === selectedCategory.value ? '' : category;
 }
 
@@ -173,7 +201,7 @@ const filteredPosts = computed(() => {
   return filtered;
 });
 
-function formatDate(dateString) {
+function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('de-AT', {
     year: 'numeric',
     month: 'long',
@@ -181,7 +209,7 @@ function formatDate(dateString) {
   });
 }
 
-function truncateContent(content, maxLength = 150) {
+function truncateContent(content: string, maxLength = 150): string {
   if (content.length <= maxLength) return content;
   return content.substring(0, maxLength) + '...';
 }
@@ -218,9 +246,10 @@ function truncateContent(content, maxLength = 150) {
         <div v-if="tags.length > 0" class="tags-filter">
           <h2>Filter by Tag</h2>
           <div class="tags-list">
-            <button v-for="tag in tags" :key="typeof tag === 'object' ? tag.id : tag" @click="filterByTag(typeof tag === 'object' ? tag.name : tag)"
-              :class="['tag-filter-btn', { active: selectedTag === (typeof tag === 'object' ? tag.name : tag) }, 'filter-btn']">
-              {{ typeof tag === 'object' ? tag.name : tag }}
+            <button v-for="tag in tags" :key="typeof tag === 'object' && 'id' in tag ? tag.id : tag" 
+              @click="filterByTag(typeof tag === 'object' && 'name' in tag ? tag.name : String(tag))"
+              :class="['tag-filter-btn', { active: selectedTag === (typeof tag === 'object' && 'name' in tag ? tag.name : tag) }, 'filter-btn']">
+              {{ typeof tag === 'object' && 'name' in tag ? tag.name : tag }}
             </button>
           </div>
           <button v-if="selectedTag" @click="selectedTag = ''" class="tag-filter-btn filter-btn clear">
@@ -232,13 +261,13 @@ function truncateContent(content, maxLength = 150) {
       <div v-if="filteredPosts.length === 0" class="no-posts">
         <p>
           <template v-if="selectedCategory && selectedTag">
-            No posts with category "{{ selectedCategory }}" and tag "{{ typeof selectedTag === 'object' ? selectedTag.name : selectedTag }}".
+            No posts with category "{{ selectedCategory }}" and tag "{{ selectedTag }}".
           </template>
           <template v-else-if="selectedCategory">
             No posts with category "{{ selectedCategory }}".
           </template>
           <template v-else-if="selectedTag">
-            No posts with tag "{{ typeof selectedTag === 'object' ? selectedTag.name : selectedTag }}".
+            No posts with tag "{{ selectedTag }}".
           </template>
           <template v-else>
             No posts available yet.
@@ -252,7 +281,7 @@ function truncateContent(content, maxLength = 150) {
             v-if="post.attachments && post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i))"
             class="post-image">
             <img
-              :src="`/uploads/${post.attachments.find(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).filename}`"
+              :src="`/uploads/${post.attachments.find(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i))?.filename}`"
               :alt="post.title">
           </div>
           <div v-else class="post-image placeholder">
@@ -273,9 +302,9 @@ function truncateContent(content, maxLength = 150) {
               </span>
 
               <span v-if="post.tags && post.tags.filter(t => t !== null).length > 0"
-                v-for="tag in post.tags.filter(t => t !== null)" :key="typeof tag === 'object' ? tag.id : tag" class="tag-pill" 
-                @click="filterByTag(typeof tag === 'object' ? tag.name : tag)">
-                {{ typeof tag === 'object' ? tag.name : tag }}
+                v-for="tag in post.tags.filter(t => t !== null)" :key="typeof tag === 'object' && 'id' in tag ? tag.id : tag" class="tag-pill" 
+                @click="filterByTag(typeof tag === 'object' && 'name' in tag ? tag.name : String(tag))">
+                {{ typeof tag === 'object' && 'name' in tag ? tag.name : tag }}
               </span>
             </div>
 
@@ -301,8 +330,9 @@ function truncateContent(content, maxLength = 150) {
       rgba(222, 231, 248, 0) 100%
     )
     no-repeat padding-box fixed;
-  height: max(100vh, max-content);
-  overflow: hidden;
+
+  min-height: 100vh;
+  height: auto;
 }
 
 h1 {

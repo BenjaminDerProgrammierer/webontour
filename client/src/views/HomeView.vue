@@ -1,22 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import RecentPosts from '../components/RecentPosts.vue';
 import Logo from '../components/Logo.vue';
 import LatestCategories from '../components/LatestCategories.vue';
 import { ref, onMounted } from 'vue';
 import ErrorBox from '../components/ErrorBox.vue';
+import Navbar from '../components/Navbar.vue';
 
-let apiError = ref(null);
+interface HealthResponse {
+    status: string;
+}
+
+const apiError = ref<Error | null>(null);
+const noPosts = ref(false);
 
 onMounted(async () => {
+    // Check health
     try {
         const response = await fetch(`/api/health`);
-        const data = await response.json();
-        if (!data.status === "UP") {
+        const data = await response.json() as HealthResponse;
+        if (data.status !== "UP") {
             throw new Error("Server reported down state")
         }
     } catch (error) {
         console.error('Error connecting to server:', error);
-        apiError.value = error;
+        apiError.value = error as Error;
+    }
+
+    // Fetch recent posts
+    try {
+        const response = await fetch(`/api/posts`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const posts = await response.json();
+        noPosts.value = posts.length === 0;
+    } catch (error) {
+        console.error('Error fetching posts:', error);
     }
 });
 </script>
@@ -26,7 +45,8 @@ onMounted(async () => {
     <section id="hero">
         <div class="magicpattern"></div>
         <h1>Welcome to WEBonTour</h1>
-        <p>Here you can follow our journeys around the globe. From Austria to Australia and the whole world, here you can read our stories!</p>
+        <p>Here you can follow our journeys around the globe. From Austria to Australia and the whole world, here you
+            can read our stories!</p>
         <div class="buttons">
             <router-link to="/blog" class="link-button primary">View Blog Posts</router-link>
             <router-link to="/about" class="link-button secondary bordered">More about us</router-link>
@@ -37,19 +57,19 @@ onMounted(async () => {
     </section>
 
     <section id="recent">
-        <h2 v-if="!apiError">Recent Posts</h2>
-
         <ErrorBox v-if="apiError" title="Error" message="Unable to connect to the backend server. Is it on?" />
 
-        <div v-if="!apiError">
-            <RecentPosts />
-
-            <div class="sidebar">
-                <h3>Latest Destinations</h3>
-                <LatestCategories />
-                <router-link to="/blog" class="link-button primary">View All Blog Posts</router-link>
+        <template v-else>
+            <h2>Recent Posts</h2>
+            <div>
+                <RecentPosts />
+                <div class="sidebar" v-if="!noPosts">
+                    <h3>Latest Destinations</h3>
+                    <LatestCategories />
+                    <router-link to="/blog" class="link-button primary">View All Blog Posts</router-link>
+                </div>
             </div>
-        </div>
+        </template>
     </section>
 
     <footer>

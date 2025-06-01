@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // get URL parameter "f"
 import { useRoute } from 'vue-router';
 import { ref, onMounted } from 'vue';
@@ -12,8 +12,8 @@ console.log(f);
 
 // fetch document from backend
 
-const document = ref(null);
-const apiError = ref(null);
+const document = ref<string | null>(null);
+const apiError = ref<Error | null>(null);
 
 onMounted(async () => {
     try {
@@ -24,7 +24,7 @@ onMounted(async () => {
         document.value = await response.text();
     } catch (error) {
         console.error('Error fetching document:', error);
-        apiError.value = error;
+        apiError.value = error instanceof Error ? error : new Error(String(error));
     }
 });
 </script>

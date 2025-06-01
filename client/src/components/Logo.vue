@@ -1,11 +1,4 @@
 <!-- A Logo component for use on any Page. -->
-<template>
-    <router-link to="/" class="logo" :class="{ 'logo--inline': inline }">
-        <img :src="`/icon/transparent.png`" alt="Logo">
-        <span>WEBonTour</span>
-    </router-link>
-</template>
-
 <script>
 export default {
     props: {
@@ -16,6 +9,13 @@ export default {
     }
 }
 </script>
+
+<template>
+    <router-link to="/" class="logo" :class="{ 'logo--inline': inline }">
+        <img :src="`/icon/transparent.png`" alt="Logo">
+        <span>WEBonTour</span>
+    </router-link>
+</template>
 
 <style scoped>
 .logo {

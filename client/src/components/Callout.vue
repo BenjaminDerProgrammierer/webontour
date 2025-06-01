@@ -1,21 +1,3 @@
-<template>
-    <div class="callout" :class="{ collapsed: isCollapsed, foldable: isFoldable }"
-        :style="{ '--callout-color': style.color }">
-        <div class="title" @click="toggleCollapse" :class="{ foldable: isFoldable }">
-            <div class="title-left">
-                <component :is="iconComponent" class="icon" :size="20" stroke-width="2" />
-                {{ titleToUse }}
-            </div>
-            <ChevronDown v-if="isFoldable" class="fold-arrow" :size="20" stroke-width="2" />
-        </div>
-
-        <div class="content" v-if="!isCollapsed">
-            <div v-if="content" v-html="content"></div>
-            <Callout v-for="(child, index) in children" :key="index" v-bind="child" />
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, computed } from 'vue'
 import {
@@ -82,6 +64,24 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1)
 }
 </script>
+
+<template>
+    <div class="callout" :class="{ collapsed: isCollapsed, foldable: isFoldable }"
+        :style="{ '--callout-color': style.color }">
+        <div class="title" @click="toggleCollapse" :class="{ foldable: isFoldable }">
+            <div class="title-left">
+                <component :is="iconComponent" class="icon" :size="20" stroke-width="2" />
+                {{ titleToUse }}
+            </div>
+            <ChevronDown v-if="isFoldable" class="fold-arrow" :size="20" stroke-width="2" />
+        </div>
+
+        <div class="content" v-if="!isCollapsed">
+            <div v-if="content" v-html="content"></div>
+            <Callout v-for="(child, index) in children" :key="index" v-bind="child" />
+        </div>
+    </div>
+</template>
 
 <style scoped>
 .callout {

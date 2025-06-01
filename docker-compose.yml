@@ -4,6 +4,8 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     ports:
       - '${CLIENT_PORT}:${CLIENT_PORT}'
     environment:
@@ -61,20 +63,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  updater:
-    build: ./updater
-    container_name: webontour-updater
-    restart: unless-stopped
-    ports:
-      - "8009:3000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /home/mcserver/docker/webontour/summerproject-2025:/app/compose
-      - .env:/app/.env
-    environment:
-      - NODE_ENV=production
-    networks:
-      - webhook-network
+  # updater:
+  #   build: ./updater
+  #   container_name: webontour-updater
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8009:3000"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /home/mcserver/docker/webontour/summerproject-2025:/app/compose
+  #     - .env:/app/.env
+  #   environment:
+  #     - NODE_ENV=production
+  #   networks:
+  #     - webhook-network
 
 networks:
   webontour_network:

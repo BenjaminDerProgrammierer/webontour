@@ -1,29 +1,68 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import UserManagement from '../components/UserManagement.vue';
 import AdminCrud from '../components/AdminCrud.vue';
 import Logo from '../components/Logo.vue';
 
+interface Attachment {
+  id: number;
+  filename: string;
+  post_id: number;
+}
+
+interface Tag {
+  id: number;
+  name: string;
+}
+
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  author_id: number;
+  created_at: string;
+  category_name?: string;
+  category_id?: number;
+  tags: Tag[];
+  attachments: Attachment[];
+}
+
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface User {
+  id: number;
+  username: string;
+  role: 'admin' | 'moderator' | 'writer' | 'user';
+}
+
 const router = useRouter();
-const posts = ref([]);
+const posts = ref<Post[]>([]);
 const isAuthenticated = ref(false);
 const loading = ref(true);
-const error = ref(null);
-const currentUser = ref(null);
+const error = ref<string | null>(null);
+const currentUser = ref<User | null>(null);
+const showAccessRequiredDialog = ref(false);
+const accessDialogTitle = ref('Access Required');
+const accessDialogMessage = ref('You need appropriate privileges to access this section.');
 
 // Form data for new/edit post
 const formMode = ref('create'); // 'create' or 'edit'
-const currentPostId = ref(null);
+const currentPostId = ref<number | null>(null);
 const title = ref('');
 const content = ref('');
-const attachments = ref([]);
-const selectedFiles = ref([]);
-const attachmentsToRemove = ref([]);
-const selectedTags = ref([]);
-const availableTags = ref([]);
-const availableCategories = ref([]);
-const selectedCategoryId = ref(null);
+const attachments = ref<Attachment[]>([]);
+const selectedFiles = ref<File[]>([]);
+const attachmentsToRemove = ref<Attachment[]>([]);
+const selectedTags = ref<Tag[]>([]);
+const availableTags = ref<string[]>([]);
+const availableCategories = ref<Category[]>([]);
+const selectedCategoryId = ref<number | null>(null);
 const newTag = ref('');
 const newCategory = ref('');
 const showNewCategoryInput = ref(false);
@@ -31,6 +70,10 @@ const showNewCategoryInput = ref(false);
 // UI state
 const activeTab = ref('posts'); // 'posts', 'users' or 'crud'
 
+function closeAccessRequiredDialog() {
+  showAccessRequiredDialog.value = false;
+  router.replace('/');
+}
 
 onMounted(async () => {
   await checkAuthStatus();
@@ -75,6 +118,20 @@ async function checkAuthStatus() {
       const userData = await response.json();
       currentUser.value = userData;
       isAuthenticated.value = true;
+
+      // Check if user has any valid role for the admin panel (writer, moderator, or admin)
+      if (!['writer', 'moderator', 'admin'].includes(userData.role)) {
+        accessDialogTitle.value = "Access Required";
+        accessDialogMessage.value = "You need writer, moderator, or admin privileges to access this page.";
+        showAccessRequiredDialog.value = true;
+        // The redirect happens after the user dismisses the dialog
+        return;
+      }
+
+      // Check which tab to show as active based on role
+      if (userData.role === 'writer') {
+        activeTab.value = 'posts'; // Writers can only access posts tab
+      }
     } else {
       isAuthenticated.value = false;
     }
@@ -107,7 +164,15 @@ async function fetchPosts() {
     });
 
     if (response.ok) {
-      posts.value = await response.json();
+      let allPosts = await response.json();
+
+      // If user is a writer, filter to only show their own posts
+      // This is a client-side backup to the server-side filtering
+      if (currentUser.value?.role === 'writer') {
+        allPosts = allPosts.filter((post: Post) => post.author_id === currentUser.value?.id);
+      }
+
+      posts.value = allPosts;
     } else {
       throw new Error('Failed to fetch posts');
     }
@@ -148,8 +213,11 @@ async function fetchCategories() {
   }
 }
 
-function handleFileChange(event) {
-  selectedFiles.value = Array.from(event.target.files);
+function handleFileChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (target.files) {
+    selectedFiles.value = Array.from(target.files);
+  }
 }
 
 function resetForm() {
@@ -165,27 +233,38 @@ function resetForm() {
   newTag.value = '';
 }
 
-function editPost(post) {
+function editPost(post: Post) {
+  // Check if the user has permission to edit this post
+  if (!canEditPost(post)) {
+    accessDialogTitle.value = "Permission Denied";
+    accessDialogMessage.value = "You don't have permission to edit this post.";
+    showAccessRequiredDialog.value = true;
+    return;
+  }
+
   formMode.value = 'edit';
   currentPostId.value = post.id;
   title.value = post.title;
   content.value = post.content;
-  selectedCategoryId.value = post.category_id;
+  selectedCategoryId.value = post.category_id || null;
 
   attachments.value = Array.isArray(post.attachments) ? post.attachments : [];
   attachmentsToRemove.value = [];
 
   if (post.tags && Array.isArray(post.tags)) {
-    selectedTags.value = post.tags.filter(tag => tag !== null);
+    selectedTags.value = post.tags.filter((tag: Tag) => tag !== null);
   } else {
     selectedTags.value = [];
   }
 
   // Scroll to form
-  document.getElementById('post-form').scrollIntoView({ behavior: 'smooth' });
+  const postForm = document.getElementById('post-form');
+  if (postForm) {
+    postForm.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
-function toggleAttachmentRemoval(attachment) {
+function toggleAttachmentRemoval(attachment: Attachment) {
   const index = attachmentsToRemove.value.indexOf(attachment);
   if (index === -1) {
     attachmentsToRemove.value.push(attachment);
@@ -195,20 +274,21 @@ function toggleAttachmentRemoval(attachment) {
 }
 
 function addTag() {
-  if (newTag.value && !selectedTags.value.includes(newTag.value)) {
-    selectedTags.value.push(newTag.value);
+  if (newTag.value && !selectedTags.value.some(tag => tag.name === newTag.value)) {
+    // Create a new tag object with temporary ID (will be replaced by server)
+    selectedTags.value.push({ id: -1, name: newTag.value });
     newTag.value = '';
   }
 }
 
-function removeTag(tag) {
-  const index = selectedTags.value.indexOf(tag);
+function removeTag(tag: Tag) {
+  const index = selectedTags.value.findIndex(t => t.id === tag.id && t.name === tag.name);
   if (index !== -1) {
     selectedTags.value.splice(index, 1);
   }
 }
 
-async function submitPost(event) {
+async function submitPost(event: Event) {
   event.preventDefault();
 
   const formData = new FormData();
@@ -217,7 +297,7 @@ async function submitPost(event) {
 
   // Append category ID if selected
   if (selectedCategoryId.value) {
-    formData.append('category_id', selectedCategoryId.value);
+    formData.append('category_id', selectedCategoryId.value.toString());
   }
 
   // Append files
@@ -225,15 +305,15 @@ async function submitPost(event) {
     formData.append('attachments', file);
   }
 
-  // Append tags
+  // Append tags - use tag names or IDs
   for (const tag of selectedTags.value) {
-    formData.append('tags', tag);
+    formData.append('tags', tag.name);
   }
 
   // For edit mode, include attachments to remove
   if (formMode.value === 'edit' && attachmentsToRemove.value.length > 0) {
     for (const attachment of attachmentsToRemove.value) {
-      formData.append('removeAttachments', attachment);
+      formData.append('removeAttachments', attachment.id.toString());
     }
   }
 
@@ -260,14 +340,41 @@ async function submitPost(event) {
     }
 
     await Promise.all([fetchPosts(), fetchTags()]);
+    
+    // Reset the file input
+    const fileInput = document.getElementById('files') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
     resetForm();
   } catch (err) {
     console.error('Error submitting post:', err);
-    error.value = err.message;
+    if (err instanceof Error) {
+      error.value = err.message;
+    } else {
+      error.value = 'An unknown error occurred';
+    }
   }
 }
 
-async function deletePost(id) {
+async function deletePost(id: number) {
+  // Find the post to check permissions
+  const post = posts.value.find(p => p.id === id);
+
+  if (!post) {
+    console.error('Post not found');
+    return;
+  }
+
+  // Check if the user has permission to delete this post
+  if (!canEditPost(post)) {
+    accessDialogTitle.value = "Permission Denied";
+    accessDialogMessage.value = "You don't have permission to delete this post.";
+    showAccessRequiredDialog.value = true;
+    return;
+  }
+
   if (!confirm('Are you sure you want to delete this post?')) {
     return;
   }
@@ -286,19 +393,24 @@ async function deletePost(id) {
     await fetchPosts();
   } catch (err) {
     console.error('Error deleting post:', err);
-    error.value = err.message;
+    if (err instanceof Error) {
+      error.value = err.message;
+    } else {
+      error.value = 'An unknown error occurred';
+    }
   }
-}
-
-// Check if the user has at least one of the required roles
-function hasAnyRole(requiredRoles) {
-  if (!currentUser.value) return false;
-  return requiredRoles.includes(currentUser.value.role);
 }
 
 // For convenience, specific role checks
 const isAdmin = () => currentUser.value?.role === 'admin';
-const isModerator = () => ['admin', 'moderator'].includes(currentUser.value?.role);
+const isModerator = () => ['admin', 'moderator'].includes(currentUser.value?.role || '');
+const isWriter = () => ['admin', 'moderator', 'writer'].includes(currentUser.value?.role || '');
+
+// Check if user can edit a specific post
+function canEditPost(post: Post) {
+  if (!currentUser.value) return false;
+  return isAdmin() || isModerator() || (isWriter() && post.author_id === currentUser.value.id);
+}
 
 async function createCategory() {
   if (!newCategory.value.trim()) {
@@ -327,7 +439,11 @@ async function createCategory() {
     }
   } catch (err) {
     console.error('Error creating category:', err);
-    error.value = err.message;
+    if (err instanceof Error) {
+      error.value = err.message;
+    } else {
+      error.value = 'An unknown error occurred';
+    }
   }
 }
 
@@ -336,23 +452,44 @@ function toggleNewCategoryInput() {
   if (showNewCategoryInput.value) {
     // Focus the input after it's shown
     setTimeout(() => {
-      document.getElementById('new-category-input').focus();
+      const newCategoryInput = document.getElementById('new-category-input');
+      if (newCategoryInput) {
+        newCategoryInput.focus();
+      }
     }, 0);
   }
 }
 </script>
 
 <template>
-  <Logo />
-
   <div class="admin-container">
-    <div v-if="loading" class="loading">
-      Loading...
+    <!-- Access Required Dialog -->
+    <div v-if="showAccessRequiredDialog" class="admin-required-dialog">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <h3>{{ accessDialogTitle }}</h3>
+          <button @click="closeAccessRequiredDialog" class="close-btn">&times;</button>
+        </div>
+        <div class="dialog-body">
+          <p>{{ accessDialogMessage }}</p>
+        </div>
+        <div class="dialog-footer">
+          <button @click="closeAccessRequiredDialog" class="cancel-btn">Close</button>
+          <button @click="logout" class="action-btn">Sign Out</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading-screen">
+      <div class="spinner"></div>
+      <p>Loading...</p>
     </div>
 
     <div v-else-if="isAuthenticated" class="admin-dashboard">
       <div class="admin-header">
-        <h2>Welcome to the Admin Dashboard</h2>
+        <h2 class="admin-title">
+          <Logo inline="true" />Welcome to the Admin Dashboard
+        </h2>
         <div class="user-info">
           <span class="username">{{ currentUser?.username }}</span>
           <span class="role-badge" :class="currentUser?.role">{{ currentUser?.role }}</span>
@@ -361,14 +498,18 @@ function toggleNewCategoryInput() {
       </div>
 
       <div class="tabs">
+        <!-- All roles (writer, moderator, admin) can access posts tab -->
         <button @click="activeTab = 'posts'" :class="{ active: activeTab === 'posts' }" class="tab-button">
           Manage Posts
         </button>
 
+        <!-- Only admin can access user management -->
         <button v-if="isAdmin()" @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }"
           class="tab-button">
           Manage Users
         </button>
+
+        <!-- Only admin can access advanced CRUD -->
         <button v-if="isAdmin()" @click="activeTab = 'crud'" :class="{ active: activeTab === 'crud' }"
           class="tab-button">
           Advanced CRUD
@@ -436,13 +577,13 @@ function toggleNewCategoryInput() {
             </div>
           </div>
 
-          <!-- Tags -->
+          <!-- Fix selected tags display in the form -->
           <div class="form-group">
             <label for="tags">Tags:</label>
             <div class="tag-selector">
               <div class="selected-tags">
-                <span v-for="tag in selectedTags" :key="tag" class="tag">
-                  {{ tag }}
+                <span v-for="tag in selectedTags" :key="tag.id" class="tag">
+                  {{ tag.name }}
                   <button type="button" @click="removeTag(tag)" class="remove-tag">&times;</button>
                 </span>
               </div>
@@ -474,11 +615,15 @@ function toggleNewCategoryInput() {
                 class="post-card">
                 <h4 class="post-title">{{ post.title }}</h4>
                 <div class="post-meta">
-                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString() }}</p>
+                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString('de-AT', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                    }) }}</p>
                   <p class="post-category" v-if="post.category_name">{{ post.category_name }}</p>
                 </div>
                 <div class="post-tags">
-                  <span v-for="tag in post.tags" :key="tag" class="post-tag">{{ tag }}</span>
+                  <span v-for="tag in post.tags" :key="tag.id" class="post-tag">{{ tag.name }}</span>
                 </div>
                 <div class="post-actions">
                   <a :href="`/post/${post.id}`" target="_blank" class="link-button small">View</a>
@@ -488,10 +633,10 @@ function toggleNewCategoryInput() {
               </div>
             </div>
           </div>
-          <div class="posts-list" v-if="isAdmin()">
+          <div class="posts-list" v-if="isModerator()">
             <h3>Other's Posts</h3>
 
-            <div v-if="posts.length === 0" class="no-posts">
+            <div v-if="posts.filter(p => p.author !== currentUser?.username).length === 0" class="no-posts">
               No posts from other users yet.
             </div>
 
@@ -500,11 +645,16 @@ function toggleNewCategoryInput() {
                 class="post-card">
                 <h4 class="post-title">{{ post.title }}</h4>
                 <div class="post-meta">
-                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString() }}</p>
+                  <p class="post-date">{{ new Date(post.created_at).toLocaleDateString('de-AT', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) }}</p>
+                  <p class="post-author">{{ post.author }}</p>
                   <p class="post-category" v-if="post.category_name">{{ post.category_name }}</p>
                 </div>
                 <div class="post-tags">
-                  <span v-for="tag in post.tags" :key="tag" class="post-tag">{{ tag }}</span>
+                  <span v-for="tag in post.tags" :key="tag.id" class="post-tag">{{ tag.name }}</span>
                 </div>
                 <div class="post-actions">
                   <a :href="`/post/${post.id}`" target="_blank" class="link-button small">View</a>
@@ -540,9 +690,16 @@ function toggleNewCategoryInput() {
   gap: 20px;
   grid-template-rows: 1fr 1fr;
   height: 100%;
+
   &>* {
     height: 100%;
   }
+}
+
+.admin-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .admin-container {
@@ -799,6 +956,7 @@ function toggleNewCategoryInput() {
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
+  height: 450px;
 }
 
 .posts-list h3 {
@@ -817,7 +975,6 @@ function toggleNewCategoryInput() {
   gap: 15px;
   max-height: 100%;
   overflow-y: auto;
-  padding-right: 10px;
 }
 
 .post-card {
@@ -872,5 +1029,118 @@ function toggleNewCategoryInput() {
 
 .link-button.danger:hover {
   background-color: #c82333;
+}
+
+/* Admin Required Dialog Styles */
+.admin-required-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  max-width: 90%;
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f44336;
+  /* Red for warning */
+  color: white;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.dialog-body {
+  padding: 20px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid #e0e0e0;
+  gap: 10px;
+}
+
+.dialog-footer button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dialog-footer .cancel-btn {
+  background-color: #e0e0e0;
+  border: none;
+  color: #333;
+}
+
+.dialog-footer .action-btn {
+  background-color: #2196f3;
+  border: none;
+  color: white;
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #2196f3;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

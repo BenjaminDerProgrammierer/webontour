@@ -21,6 +21,13 @@
 /* Default Font */
 body {
     font-family: var(--body-font-family);
+    min-height: 100vh;
+    height: auto;
+}
+
+#app {
+    min-height: 100vh;
+    height: auto;
 }
 
 /* Reset */

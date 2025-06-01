@@ -1,11 +1,12 @@
 <!-- A grid of Posts to showcase recent activity - For use on the Home page. -->
-<script setup>
+<script setup lang="ts">
 import PostCard from './PostCard.vue';
 import { ref, onMounted } from 'vue';
+import type { Post } from '../types/Post';
 
-const posts = ref([]);
+const posts = ref<Post[]>([]);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 
 onMounted(async () => {
@@ -19,13 +20,13 @@ async function fetchRecentPosts() {
         if (response.ok) {
             const allPosts = await response.json();
             // Get only the 5 most recent posts
-            posts.value = allPosts.sort((a, b) =>
-                new Date(b.created_at) - new Date(a.created_at)
+            posts.value = allPosts.sort((a: Post, b: Post) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             ).slice(0, 6);
         } else {
             throw new Error('Failed to fetch posts');
         }
-    } catch (err) {
+    } catch (err: any) {
         console.error('Error fetching recent posts:', err);
 
         error.value = err.message + `/api/posts`;

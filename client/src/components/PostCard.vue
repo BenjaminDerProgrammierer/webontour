@@ -1,41 +1,65 @@
-<script setup>
+<script setup lang="ts">
+interface Attachment {
+    id: number;
+    filename: string;
+    originalname: string;
+    size: number;
+    mimetype: string;
+}
 
-const props = defineProps({
-    post: {
-        type: Object,
-        required: true
-    }
-});
+interface Post {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    excerpt: string;
+    author: string;
+    created_at: string;
+    updated_at: string;
+    published: boolean;
+    attachments: Attachment[];
+    category_id?: number;
+    category_name?: string;
+}
 
+const props = defineProps<{
+    post: Post
+}>();
 
 // Function to format date
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('de-AT', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
 
 // Function to truncate content
-function truncateContent(content, maxLength = 100) {
+function truncateContent(content: string | undefined, maxLength: number = 100): string | undefined {
     if (!content || content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
 }
 
 // Check if post has a valid image
-function hasValidImage() {
-    const hasAttachmant =props.post.attachments && props.post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i))
-    if (hasAttachmant) {
-        return props.post.attachments.find(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).filename;
+function hasValidImage(): string | false {
+    const hasAttachment = props.post.attachments && 
+        props.post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+    
+    if (hasAttachment) {
+        const attachment = props.post.attachments.find(
+            a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)
+        );
+        return attachment ? attachment.filename : false;
     }
     return false;
 }
 
 // Get image from post attachments or use placeholder
-function getPostImage() {
-    if (hasValidImage()) {
-        return `/uploads/${hasValidImage()}`;
+function getPostImage(): string {
+    const validImage = hasValidImage();
+    if (validImage) {
+        return `/uploads/${validImage}`;
     }
     // Fallback to placeholder image
     return `https://picsum.photos/900/600?random=${Math.floor(Math.random() * 1000)}`;
@@ -45,7 +69,7 @@ const postImage = getPostImage();
 const hasImage = hasValidImage();
 
 // Check for touch devices
-const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 </script>
 

@@ -1,21 +1,34 @@
-<!-- TODO:
-  - User can scroll through the popup images with left/right arrows
-  - User can close the popup with the escape key or by clicking outside the image
-  - markdown support for posts: callout, emoji preview
--->
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MarkdownRenderer from '../components/MarkdownRenderer.vue';
 import ErrorBox from '../components/ErrorBox.vue';
 
+interface Attachment {
+  id: number;
+  filename: string;
+  post_id: number;
+}
+
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  author_id: number;
+  created_at: string;
+  category_name?: string;
+  category_id?: number;
+  tags: string[];
+  attachments: Attachment[];
+}
+
 const route = useRoute();
 const router = useRouter();
-const post = ref(null);
+const post = ref<Post | null>(null);
 const loading = ref(true);
-const error = ref(null);
-const popupAttachment = ref(null);
+const error = ref<string | null>(null);
+const popupAttachment = ref<Attachment | null>(null);
 
 onMounted(async () => {
   await fetchPost();
@@ -34,17 +47,21 @@ async function fetchPost() {
   } catch (err) {
     console.error('Error fetching post:', err);
     // Provide a friendly error message when the backend is down
-    if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-      error.value = "Unable to connect to the server. The backend service might be down. Please try again later.";
+    if (err instanceof Error) {
+      if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+        error.value = "Unable to connect to the server. The backend service might be down. Please try again later.";
+      } else {
+        error.value = err.message;
+      }
     } else {
-      error.value = err.message;
+      error.value = "An unknown error occurred";
     }
   } finally {
     loading.value = false;
   }
 }
 
-function formatDate(dateString) {
+function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('de-AT', {
     year: 'numeric',
     month: 'long',
@@ -52,14 +69,14 @@ function formatDate(dateString) {
   });
 }
 
-function filterByTag(tag) {
+function filterByTag(tag: string) {
   router.push({
     path: '/blog',
     query: { tag }
   });
 }
 
-function filterByCategory(category) {
+function filterByCategory(category: string) {
   router.push({
     path: '/blog',
     query: { category }
@@ -89,7 +106,7 @@ function filterByCategory(category) {
         <div class="post-categorization"
           v-if="post.category_name || (post.tags && post.tags.filter(t => t !== null).length > 0)">
 
-          <span class="category-pill" @click="filterByCategory(post.category_name)">
+          <span class="category-pill" @click="filterByCategory(post.category_name || '')" v-if="post.category_name">
             {{ post.category_name }}
           </span>
           <span v-for="tag in post.tags.filter(t => t !== null)" :key="tag" class="tag-pill" @click="filterByTag(tag)">
@@ -110,7 +127,7 @@ function filterByCategory(category) {
             <img :src="`/uploads/${attachment.filename}`" :alt="`Attachment ${index + 1}`"
               v-if="attachment.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="popupAttachment = attachment" />
 
-            <a :href="`/uploads/${attachment}`" target="_blank" v-else>
+            <a :href="`/uploads/${attachment.filename}`" target="_blank" v-else>
               <div class="file-attachment">
                 <span class="material-symbols-outlined">description</span>
                 <span>{{ attachment.filename.substring('attachments-'.length) }}</span>

@@ -27,6 +27,11 @@ export function auth(req, res, next) {
 }
 
 /**
+ * Admin-only middleware
+ */
+export const isAdmin = checkRole(['admin']);
+
+/**
  * Get the current user's ID from either session or token
  */
 export function getUserId(req) {
@@ -102,7 +107,6 @@ export async function isAuthorizedForPost(req, postAuthorId) {
 }
 
 // Common role checks
-export const isAdmin = checkRole(['admin']);
 export const isWriter = checkRole(['writer', 'admin']);
 export const isWriterOrModerator = checkRole(['writer', 'moderator', 'admin']);
 export const isModeratorOrAdmin = checkRole(['moderator', 'admin']);

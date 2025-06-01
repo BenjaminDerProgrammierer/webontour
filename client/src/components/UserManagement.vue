@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
 const users = ref([]);
@@ -45,7 +45,7 @@ async function fetchUsers() {
     const response = await fetch(`/api/auth/users`, {
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       users.value = await response.json();
     } else {
@@ -62,7 +62,7 @@ async function fetchRoles() {
     const response = await fetch(`/api/auth/roles`, {
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       roles.value = await response.json();
     } else {
@@ -77,10 +77,10 @@ async function fetchRoles() {
 function startEditRole(user) {
   // Reset any previous edit mode
   cancelEdit();
-  
+
   editingUserId.value = user.id;
   editMode.value = 'role';
-  
+
   // Find role id from role name
   const roleObj = roles.value.find(r => r.name === user.role);
   selectedRoleId.value = roleObj ? roleObj.id : null;
@@ -89,10 +89,10 @@ function startEditRole(user) {
 function startEditProfile(user) {
   // Reset any previous edit mode
   cancelEdit();
-  
+
   editingUserId.value = user.id;
   editMode.value = 'profile';
-  
+
   editForm.value = {
     id: user.id,
     username: user.username,
@@ -106,10 +106,10 @@ function startEditProfile(user) {
 function startResetPassword(user) {
   // Reset any previous edit mode
   cancelEdit();
-  
+
   resetPasswordUserId.value = user.id;
   editMode.value = 'password';
-  
+
   resetPasswordForm.value = {
     newPassword: '',
     confirmPassword: ''
@@ -119,7 +119,7 @@ function startResetPassword(user) {
 function startDeleteUser(user) {
   // Reset any previous edit mode
   cancelEdit();
-  
+
   userToDelete.value = user;
   showDeleteConfirm.value = true;
   editMode.value = 'delete';
@@ -132,7 +132,7 @@ function cancelEdit() {
   userToDelete.value = null;
   showDeleteConfirm.value = false;
   editMode.value = null;
-  
+
   editForm.value = {
     id: null,
     username: '',
@@ -141,7 +141,7 @@ function cancelEdit() {
     newPassword: '',
     confirmPassword: ''
   };
-  
+
   resetPasswordForm.value = {
     newPassword: '',
     confirmPassword: ''
@@ -153,7 +153,7 @@ async function updateUserRole(userId) {
     error.value = 'Please select a role';
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/auth/users/${userId}/`, {
       method: 'PUT',
@@ -163,7 +163,7 @@ async function updateUserRole(userId) {
       },
       body: JSON.stringify({ roleId: selectedRoleId.value })
     });
-    
+
     if (response.ok) {
       showSuccessMessage('User role updated successfully');
       await fetchUsers();
@@ -184,14 +184,14 @@ async function updateUserProfile() {
     error.value = 'Username and email are required';
     return;
   }
-  
+
   // Simple email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(editForm.value.email)) {
     error.value = 'Please enter a valid email address';
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/auth/users/${editForm.value.id}`, {
       method: 'PUT',
@@ -204,7 +204,7 @@ async function updateUserProfile() {
         email: editForm.value.email
       })
     });
-    
+
     if (response.ok) {
       showSuccessMessage('User profile updated successfully');
       await fetchUsers();
@@ -225,17 +225,17 @@ async function resetPassword() {
     error.value = 'Please enter and confirm the new password';
     return;
   }
-  
+
   if (resetPasswordForm.value.newPassword.length < 8) {
     error.value = 'Password must be at least 8 characters long';
     return;
   }
-  
+
   if (resetPasswordForm.value.newPassword !== resetPasswordForm.value.confirmPassword) {
     error.value = 'Passwords do not match';
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/auth/users/${resetPasswordUserId.value}/password`, {
       method: 'PUT',
@@ -247,7 +247,7 @@ async function resetPassword() {
         password: resetPasswordForm.value.newPassword
       })
     });
-    
+
     if (response.ok) {
       showSuccessMessage('Password reset successfully');
       cancelEdit();
@@ -266,13 +266,13 @@ async function deleteUser() {
     error.value = 'No user selected for deletion';
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/auth/users/${userToDelete.value.id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       showSuccessMessage(`User ${userToDelete.value.username} deleted successfully`);
       await fetchUsers();
@@ -298,24 +298,24 @@ function showSuccessMessage(message) {
 <template>
   <div class="user-management">
     <h3>User Management</h3>
-    
+
     <div v-if="loading" class="loading">
       Loading users...
     </div>
-    
+
     <div v-else-if="error" class="error-message">
       {{ error }}
       <button @click="error = null; cancelEdit()" class="link-button secondary small">Dismiss</button>
     </div>
-    
+
     <div v-else-if="successMessage" class="success-message">
       {{ successMessage }}
     </div>
-    
+
     <div v-if="users.length === 0" class="no-users">
       No users found.
     </div>
-    
+
     <div v-else class="users-table-container">
       <table class="users-table">
         <thead>
@@ -342,9 +342,14 @@ function showSuccessMessage(message) {
               </span>
               <span v-else class="role-badge" :class="user.role">{{ user.role }}</span>
             </td>
-            <td>{{ new Date(user.created_at).toLocaleDateString() }}</td>
+            <td>{{ new Date(user.created_at).toLocaleDateString('de-AT', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+              }) }}</td>
             <td class="actions-cell">
-              <div v-if="editingUserId !== user.id && resetPasswordUserId !== user.id && !showDeleteConfirm" class="action-buttons">
+              <div v-if="editingUserId !== user.id && resetPasswordUserId !== user.id && !showDeleteConfirm"
+                class="action-buttons">
                 <button @click="startEditProfile(user)" class="link-button primary small">Edit</button>
                 <button @click="startEditRole(user)" class="link-button secondary small">Role</button>
                 <button @click="startResetPassword(user)" class="link-button warning small">Reset</button>
@@ -354,7 +359,7 @@ function showSuccessMessage(message) {
           </tr>
         </tbody>
       </table>
-      
+
       <!-- Edit Profile Form -->
       <div v-if="editMode === 'profile'" class="edit-form-container">
         <div class="edit-form">
@@ -373,7 +378,7 @@ function showSuccessMessage(message) {
           </div>
         </div>
       </div>
-      
+
       <!-- Reset Password Form -->
       <div v-if="editMode === 'password'" class="edit-form-container">
         <div class="edit-form">
@@ -392,7 +397,7 @@ function showSuccessMessage(message) {
           </div>
         </div>
       </div>
-      
+
       <!-- Delete Confirmation -->
       <div v-if="editMode === 'delete'" class="edit-form-container">
         <div class="edit-form">
@@ -418,7 +423,8 @@ function showSuccessMessage(message) {
   position: relative;
 }
 
-.loading, .no-users {
+.loading,
+.no-users {
   text-align: center;
   padding: 15px;
   color: #666;
@@ -453,7 +459,8 @@ function showSuccessMessage(message) {
   border-collapse: collapse;
 }
 
-.users-table th, .users-table td {
+.users-table th,
+.users-table td {
   border: 1px solid #ddd;
   padding: 8px 12px;
   text-align: left;
@@ -597,5 +604,4 @@ function showSuccessMessage(message) {
   color: #e74c3c;
   font-weight: bold;
 }
-
 </style>
