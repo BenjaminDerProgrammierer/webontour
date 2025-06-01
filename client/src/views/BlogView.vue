@@ -13,12 +13,10 @@ interface Attachment {
   mimetype: string;
 }
 
-interface TagObject {
+interface Tag {
   id: string | number;
   name: string;
 }
-
-type TagType = string | TagObject;
 
 interface Post {
   id: number;
@@ -33,7 +31,7 @@ interface Post {
   attachments: Attachment[];
   category_id?: number;
   category_name?: string;
-  tags?: TagType[];
+  tags?: Tag[];
 }
 
 const posts = ref<Post[]>([]);
@@ -41,7 +39,7 @@ const loading = ref<boolean>(true);
 const error = ref<string | null>(null);
 const selectedTag = ref<string>('');
 const selectedCategory = ref<string>('');
-const tags = ref<TagType[]>([]);
+const tags = ref<Tag[]>([]);
 const categories = ref<string[]>([]);
 const route = useRoute();
 const router = useRouter();
@@ -106,30 +104,6 @@ async function fetchPosts() {
   try {
     // Add query parameters for filtering if needed
     let url = `/api/posts`;
-    const params = new URLSearchParams();
-
-    if (route.query.category) {
-      params.append('category', typeof route.query.category === 'string' ? route.query.category : '');
-    }
-    if (route.query.tag) {
-      params.append('tag', typeof route.query.tag === 'string' ? route.query.tag : '');
-    }
-    if (route.query.author) {
-      params.append('author', typeof route.query.author === 'string' ? route.query.author : '');
-    }
-    
-    // Add pagination if needed in the future
-    if (route.query.limit) {
-      params.append('limit', typeof route.query.limit === 'string' ? route.query.limit : '');
-    }
-    if (route.query.offset) {
-      params.append('offset', typeof route.query.offset === 'string' ? route.query.offset : '');
-    }
-
-    // Append query parameters if they exist
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
 
     const response = await fetch(url);
 
@@ -153,13 +127,18 @@ async function fetchPosts() {
 
 function extractTags() {
   // Extract unique tags from all posts
-  const tagSet = new Set<TagType>();
+  const tagSet = new Set<Tag>();
   posts.value.forEach(post => {
     post.tags?.forEach(tag => {
       if (tag !== null) tagSet.add(tag);
     });
   });
-  tags.value = Array.from(tagSet).sort() as TagType[];
+  tags.value = Array.from(tagSet).sort() as Tag[];
+
+  // Sort tags by name and discard duplicates
+  tags.value = tags.value.filter((tag, index, self) =>
+    index === self.findIndex(t => t.name === tag.name)
+  ).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function extractCategories() {
@@ -187,7 +166,7 @@ const filteredPosts = computed(() => {
   // Filter by tag if selected
   if (selectedTag.value) {
     filtered = filtered.filter(post =>
-      post.tags?.includes(selectedTag.value)
+      post.tags?.some(tag => tag.name === selectedTag.value)
     );
   }
 
@@ -247,7 +226,7 @@ function truncateContent(content: string, maxLength = 150): string {
           <h2>Filter by Tag</h2>
           <div class="tags-list">
             <button v-for="tag in tags" :key="typeof tag === 'object' && 'id' in tag ? tag.id : tag" 
-              @click="filterByTag(typeof tag === 'object' && 'name' in tag ? tag.name : String(tag))"
+              @click="filterByTag(tag.name)"
               :class="['tag-filter-btn', { active: selectedTag === (typeof tag === 'object' && 'name' in tag ? tag.name : tag) }, 'filter-btn']">
               {{ typeof tag === 'object' && 'name' in tag ? tag.name : tag }}
             </button>

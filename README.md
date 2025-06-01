@@ -66,7 +66,6 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 ### Important bugs to fix now
 
-- Blog filters - tag does not work; reload posts on filter change
 - Admin CRUD, Logo, User management, markdown renderer: TS, composition API, general types
 
 ### Optional improvements to do later
