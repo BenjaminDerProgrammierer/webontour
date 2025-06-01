@@ -65,14 +65,14 @@ cat > ./index.html << EOF
         li {
             margin: 8px 0;
         }
-        .directory {
-            font-weight: bold;
-        }
         .directory::before {
             content: "📄 ";
         }
         .file::before {
             content: "📎 ";
+        }
+        .site::before {
+            content: "🌐 ";
         }
         a {
             text-decoration: none;
@@ -93,9 +93,7 @@ EOF
 find . -maxdepth 1 -type d | sort | grep -v "^\.$" | while read dir; do
     dir_name=$(basename "$dir")
     if [ -f "$dir/index.html" ]; then
-        echo "        <li class=\"directory\"><a href=\"./$dir_name/index.html\">$dir_name</a></li>" >> ./index.html
-    else
-        echo "        <li class=\"directory\">$dir_name</li>" >> ./index.html
+        echo "        <li class=\"directory\"><a href=\"./$dir_name/\">$dir_name</a></li>" >> ./index.html
     fi
 done
 
