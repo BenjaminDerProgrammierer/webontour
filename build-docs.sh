@@ -107,6 +107,7 @@ done
 
 # Close HTML tags
 cat >> ./index.html << EOF
+    <li class="site"><a href="https://webontour.eu" target="_blank">Website Home on webontour.eu</a></li>
     </ul>
     <p><small>Generated on $(date)</small></p>
 </body>
