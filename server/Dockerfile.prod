@@ -1,18 +1,16 @@
 FROM node:lts-alpine
 
-# Install cURL (for health check)
+# Install cURL for health checks
 RUN apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install dependencies
 COPY package*.json ./
+RUN npm install
 
-# Install dependencies without dev dependencies
-RUN npm ci --only=production
-
-# Copy application files
+# Copy application files (node_modules are ignored)
 COPY . .
 
 # Environment
@@ -20,5 +18,5 @@ ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
-# Run in production
+# Run the application
 CMD ["npm", "start"]

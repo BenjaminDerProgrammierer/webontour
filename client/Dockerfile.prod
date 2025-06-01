@@ -1,13 +1,11 @@
-# Build stage
+# --- Build stage ---
 FROM node:lts-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
 # Install dependencies
+COPY package*.json ./
 RUN npm install
 
 # Copy application files (node_modules are ignored)
@@ -16,26 +14,44 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage with Nginx
+# --- Option A: Production stage with Vite serve ---
+# FROM node:lts-alpine
+# 
+# # Set working directory
+# WORKDIR /app
+# 
+# # Copy built assets from builder stage
+# COPY --from=builder /app/dist /app/dist
+# 
+# # Install production dependencies
+# COPY package*.json ./
+# RUN npm install
+# 
+# # Copy important configuration files
+# COPY vite.config.ts ./
+# COPY tsconfig*.json ./
+# 
+# # Start the application using Vite's production server
+# CMD ["npm", "run", "serve"]
+
+# --- Option B: Production stage with Nginx ---
 FROM nginx:alpine
 
-# Environment variables for API URL (used in the nginx config)
-ARG VITE_API_URL
-ENV API_URL=${VITE_API_URL}
+# Install envsubst
+RUN apk add --no-cache bash gettext
 
-# error out if there's no VITE_API_URL
-RUN if [ -z "$VITE_API_URL" ]; then echo "VITE_API_URL is not set"; exit 1; fi
-
-# Copy built assets from builder stage to nginx serve directory
+# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config with environment variables
-COPY nginx.conf /etc/nginx/conf.d/default.template
-RUN envsubst '${API_URL}' < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && \
-    rm /etc/nginx/conf.d/default.template
+# Copy nginx configuration as template
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-# Expose port
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]

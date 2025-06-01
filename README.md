@@ -6,10 +6,8 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 - Clone the repository
 - Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) if you haven't already.
-- Use `./generate-secrets.sh` to generate passwords for your environment variables.
-- Check the `.env` file for the required environment variables. (See [below](#environment-variables))
-- Run `docker compose -f docker-compose.dev.yml up` to start the development server.
-- Use `docker compose up -d` instead to start the production server.
+- Use `./generate-secrets.sh` to generate passwords for your environment variables. Check the `.env` file for the required environment variables. (See [below](#environment-variables))
+- Run `docker compose -f docker-compose.dev.yml up` to start the development server or `docker compose up -d` instead for the production server.
 
 ## Changelog
 
@@ -50,10 +48,11 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - I added a new admin page (0 hrs 57 mins)
 - I further improved the the website... (1 hrs 57 mins)
 - Fix a few other bugs (1 hrs 32 mins)
+- Fix the production build (2 hrs 6 mins)
 
 ### Overall Time Spent
 
-> around 45 hours
+> around 47 hours
 
 ## Quick Links
 
@@ -65,12 +64,12 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 ## todos
 
-### do now
+### Important bugs to fix now
 
 - Blog filters - tag does not work; reload posts on filter change
 - Admin CRUD, Logo, User management, markdown renderer: TS, composition API, general types
 
-### do later
+### Optional improvements to do later
 
 - world clock
 - weather

@@ -5,10 +5,8 @@ FROM node:lts-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
 # Install dependencies
+COPY package*.json ./
 RUN npm install
 
 # Environment
@@ -16,5 +14,5 @@ ENV NODE_ENV=development
 ENV PORT=8000
 EXPOSE 8000
 
-# Default command for development
+# Run the application
 CMD ["npm", "run", "dev"]

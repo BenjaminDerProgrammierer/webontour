@@ -5,7 +5,8 @@ services:
       context: ./client
       dockerfile: Dockerfile.prod
       args:
-        - VITE_API_URL=${VITE_API_URL}
+        - VITE_API_URL=http://server:${SERVER_PORT}
+        - PORT=${CLIENT_PORT}
     ports:
       - '${CLIENT_PORT}:${CLIENT_PORT}'
     environment:
