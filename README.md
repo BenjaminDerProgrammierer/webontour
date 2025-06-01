@@ -57,9 +57,9 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 ## Quick Links
 
 - [Figma File](https://www.figma.com/design/hmDD1XXnwGYYxYCjo0U45Q/Summer-Project-2025)
-- [Project Documentation](https://docs.webountour.eu/)
-- [Projektantrag](https://docs.webountour.eu/Projektantrag/)
-- [Angabe](https://docs.webountour.eu/1JHG-MEDTWT_Sommerprojekt_2425.pdf)
+- [Project Documentation](https://docs.webontour.eu/)
+- [Projektantrag](https://docs.webontour.eu/Projektantrag/)
+- [Angabe](https://docs.webontour.eu/1JHG-MEDTWT_Sommerprojekt_2425.pdf)
 - [Website home on webontour.eu](https://webontour.eu/)
 - [GitHub](https://github.com/BenjaminDerProgrammierer/summerproject-2025)
 
