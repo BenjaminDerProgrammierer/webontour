@@ -84,7 +84,7 @@ onMounted(async () => {
         <div class="footer-item">
             <h3>Contact Us</h3>
             <p>For inquiries, email us at <a href="mailto:info@webontour.eu">info@webontour.eu</a></p>
-            <p>This is v0-alpha-0.0.1</p>
+            <p>This is v0-alpha-0.0.2</p>
         </div>
         <div class="footer-item">
             <h3>Quick Links</h3>
