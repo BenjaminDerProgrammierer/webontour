@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import UserManagement from '../components/UserManagement.vue';
 import AdminCrud from '../components/AdminCrud.vue';
+import CommentsManagement from '../components/CommentsManagement.vue';
+import SignupKeysManagement from '../components/SignupKeysManagement.vue';
+import SiteSettingsManagement from '../components/SiteSettingsManagement.vue';
 import Logo from '../components/Logo.vue';
 
 interface Attachment {
@@ -23,6 +26,7 @@ interface Post {
   author: string;
   author_id: number;
   created_at: string;
+  custom_date?: string;
   category_name?: string;
   category_id?: number;
   tags: Tag[];
@@ -63,12 +67,13 @@ const selectedTags = ref<Tag[]>([]);
 const availableTags = ref<string[]>([]);
 const availableCategories = ref<Category[]>([]);
 const selectedCategoryId = ref<number | null>(null);
+const customDate = ref('');
 const newTag = ref('');
 const newCategory = ref('');
 const showNewCategoryInput = ref(false);
 
 // UI state
-const activeTab = ref('posts'); // 'posts', 'users' or 'crud'
+const activeTab = ref('posts'); // 'posts', 'users', 'comments' or 'crud'
 
 function closeAccessRequiredDialog() {
   showAccessRequiredDialog.value = false;
@@ -159,12 +164,22 @@ async function logout() {
 
 async function fetchPosts() {
   try {
-    const response = await fetch(`/api/posts`, {
+    // Request all posts for admin management (high limit for admin view)
+    const response = await fetch(`/api/posts?limit=1000`, {
       credentials: 'include'
     });
 
     if (response.ok) {
-      let allPosts = await response.json();
+      const data = await response.json();
+      
+      // Handle new API response format with pagination
+      let allPosts = [];
+      if (data.posts && Array.isArray(data.posts)) {
+        allPosts = data.posts;
+      } else if (Array.isArray(data)) {
+        // Fallback for older API format
+        allPosts = data;
+      }
 
       // If user is a writer, filter to only show their own posts
       // This is a client-side backup to the server-side filtering
@@ -225,6 +240,7 @@ function resetForm() {
   currentPostId.value = null;
   title.value = '';
   content.value = '';
+  customDate.value = '';
   selectedFiles.value = [];
   attachments.value = [];
   attachmentsToRemove.value = [];
@@ -247,6 +263,16 @@ function editPost(post: Post) {
   title.value = post.title;
   content.value = post.content;
   selectedCategoryId.value = post.category_id || null;
+
+  // Handle custom date - convert from database format to datetime-local format
+  if (post.custom_date) {
+    // Convert from PostgreSQL timestamp to datetime-local format
+    const date = new Date(post.custom_date);
+    // Format as YYYY-MM-DDTHH:MM for datetime-local input
+    customDate.value = date.toISOString().slice(0, 16);
+  } else {
+    customDate.value = '';
+  }
 
   attachments.value = Array.isArray(post.attachments) ? post.attachments : [];
   attachmentsToRemove.value = [];
@@ -274,7 +300,7 @@ function toggleAttachmentRemoval(attachment: Attachment) {
 }
 
 function addTag() {
-  if (newTag.value && !selectedTags.value.some(tag => tag.name === newTag.value)) {
+  if (newTag.value && !selectedTags.value.some((tag: Tag) => tag.name === newTag.value)) {
     // Create a new tag object with temporary ID (will be replaced by server)
     selectedTags.value.push({ id: -1, name: newTag.value });
     newTag.value = '';
@@ -282,7 +308,7 @@ function addTag() {
 }
 
 function removeTag(tag: Tag) {
-  const index = selectedTags.value.findIndex(t => t.id === tag.id && t.name === tag.name);
+  const index = selectedTags.value.findIndex((t: Tag) => t.id === tag.id && t.name === tag.name);
   if (index !== -1) {
     selectedTags.value.splice(index, 1);
   }
@@ -294,6 +320,11 @@ async function submitPost(event: Event) {
   const formData = new FormData();
   formData.append('title', title.value);
   formData.append('content', content.value);
+
+  // Append custom date if provided
+  if (customDate.value) {
+    formData.append('custom_date', customDate.value);
+  }
 
   // Append category ID if selected
   if (selectedCategoryId.value) {
@@ -360,7 +391,7 @@ async function submitPost(event: Event) {
 
 async function deletePost(id: number) {
   // Find the post to check permissions
-  const post = posts.value.find(p => p.id === id);
+  const post = posts.value.find((p: Post) => p.id === id);
 
   if (!post) {
     console.error('Post not found');
@@ -503,10 +534,27 @@ function toggleNewCategoryInput() {
           Manage Posts
         </button>
 
+        <!-- Writers, moderators, and admins can access comments -->
+        <button v-if="isWriter()" @click="activeTab = 'comments'" :class="{ active: activeTab === 'comments' }" class="tab-button">
+          Comments
+        </button>
+
         <!-- Only admin can access user management -->
         <button v-if="isAdmin()" @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }"
           class="tab-button">
           Manage Users
+        </button>
+
+        <!-- Only admin can access signup keys management -->
+        <button v-if="isAdmin()" @click="activeTab = 'signup-keys'" :class="{ active: activeTab === 'signup-keys' }"
+          class="tab-button">
+          Signup Keys
+        </button>
+
+        <!-- Only admin can access site settings -->
+        <button v-if="isAdmin()" @click="activeTab = 'site-settings'" :class="{ active: activeTab === 'site-settings' }"
+          class="tab-button">
+          Site Settings
         </button>
 
         <!-- Only admin can access advanced CRUD -->
@@ -533,6 +581,18 @@ function toggleNewCategoryInput() {
             <label for="content">Content:</label>
             <textarea id="content" v-model="content" rows="10" required></textarea>
             <small>Supports Markdown formatting</small>
+          </div>
+
+          <div class="form-group">
+            <label for="customDate">Custom Date (optional):</label>
+            <input 
+              type="datetime-local" 
+              id="customDate" 
+              v-model="customDate" 
+              class="form-input"
+              title="Leave empty to use current date/time"
+            />
+            <small>If left empty, the current date and time will be used</small>
           </div>
 
           <div class="form-group">
@@ -667,8 +727,20 @@ function toggleNewCategoryInput() {
         </div>
       </div>
 
+      <div v-else-if="activeTab === 'comments'" class="tab-content comments-tab">
+        <CommentsManagement />
+      </div>
+
       <div v-else-if="activeTab === 'users'" class="tab-content users-tab">
         <UserManagement />
+      </div>
+
+      <div v-else-if="activeTab === 'signup-keys'" class="tab-content signup-keys-tab">
+        <SignupKeysManagement />
+      </div>
+
+      <div v-else-if="activeTab === 'site-settings'" class="tab-content site-settings-tab">
+        <SiteSettingsManagement />
       </div>
 
       <div v-else-if="activeTab === 'crud'" class="tab-content crud-tab">
@@ -706,6 +778,15 @@ function toggleNewCategoryInput() {
   min-height: 100vh;
   background-color: #f5f5f5;
   padding: 20px;
+}
+
+/* White background when access dialog is shown */
+.admin-container:has(.admin-required-dialog) {
+  background-color: white;
+}
+
+.admin-container:has(.admin-required-dialog) .admin-dashboard {
+  display: none;
 }
 
 .loading,

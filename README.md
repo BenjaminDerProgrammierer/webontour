@@ -69,29 +69,30 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 - Admin CRUD, Logo, User management, markdown renderer: TS, composition API, general types
 
+### Recently Added Features
+
+- **Comments System**: Users can now comment on blog posts with nested replies, edit/delete functionality, and proper authentication
+
 ### Optional improvements to do later
+
+#### Really optional, but would be nice to have
 
 - world clock
 - weather
 - category view - world map layout
-- Redis session storage
 - Dark mode
 - document editor
 - arrow on home back up, not moving all the time
-- login required for users
-- pagination and sorting on the blog page
-- Improvements to the post page
-  - User can scroll through the popup images with left/right arrows
-  - User can close the popup with the escape key or by clicking outside the image
-  - markdown support for posts: callout, emoji preview
-  - Support for printing posts
 - about page
-- dates
-  - changable
-- comments
-  - unread comments page for admin
-- OTP (one time passwords)
-- admin sticky posts
+
+#### Technical improvements
+
+- Redis session storage
+
+#### Rather important improvements
+
+- markdown features on post page: callout, emoji preview
+- pinned posts for the admin
 
 ## Environment Variables
 

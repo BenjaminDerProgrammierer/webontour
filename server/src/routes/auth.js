@@ -8,16 +8,50 @@ const router = express.Router();
 
 /**
  * @route   POST /api/auth/signup
- * @desc    Register a new user (protected by master key)
- * @access  Protected by MASTER_SIGNUP_KEY
+ * @desc    Register a new user (protected by signup key)
+ * @access  Protected by signup key or master key
  */
 router.post('/signup', async (req, res) => {
+  const client = await getClient();
+  
   try {
-    const { username, password, email, masterKey } = req.body;
+    await client.query('BEGIN');
     
-    // Validate master key
-    if (!masterKey || masterKey !== process.env.MASTER_SIGNUP_KEY) {
-      return res.status(401).json({ message: 'Invalid master key' });
+    const { username, password, email, signupKey, masterKey } = req.body;
+    
+    // Check site settings first
+    const siteSettings = await client.query(
+      'SELECT setting_value FROM site_settings WHERE setting_key = $1',
+      ['registration_mode']
+    );
+    
+    const registrationMode = siteSettings.rows[0]?.setting_value || 'invite_only';
+    
+    if (registrationMode === 'closed') {
+      return res.status(403).json({ message: 'Registration is currently closed' });
+    }
+    
+    let signupKeyRecord = null;
+    
+    // For invite_only mode, validate signup key or master key
+    if (registrationMode === 'invite_only') {
+      if (masterKey && masterKey === process.env.MASTER_SIGNUP_KEY) {
+        // Master key is valid, allow signup
+      } else if (signupKey) {
+        // Validate signup key
+        const keyResult = await client.query(
+          'SELECT id, note FROM signup_keys WHERE key_value = $1',
+          [signupKey]
+        );
+        
+        if (keyResult.rows.length === 0) {
+          return res.status(401).json({ message: 'Invalid signup key' });
+        }
+        
+        signupKeyRecord = keyResult.rows[0];
+      } else {
+        return res.status(401).json({ message: 'Signup key or master key required' });
+      }
     }
 
     // Validate input
@@ -30,7 +64,7 @@ router.post('/signup', async (req, res) => {
     }
 
     // Check if username or email already exists
-    const existingUser = await query(
+    const existingUser = await client.query(
       'SELECT * FROM users WHERE username = $1 OR email = $2',
       [username, email]
     );
@@ -44,17 +78,27 @@ router.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     
     // Get user role ID (default to 'user' role)
-    const roleResult = await query('SELECT id FROM roles WHERE name = $1', ['user']);
+    const roleResult = await client.query('SELECT id FROM roles WHERE name = $1', ['user']);
     if (roleResult.rows.length === 0) {
       return res.status(500).json({ message: 'User role not found' });
     }
     const userRoleId = roleResult.rows[0].id;
     
     // Insert new user
-    const result = await query(
-      'INSERT INTO users (username, password, email, role_id) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role_id',
-      [username, hashedPassword, email, userRoleId]
+    const result = await client.query(
+      'INSERT INTO users (username, password, email, role_id, signup_note) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role_id',
+      [username, hashedPassword, email, userRoleId, signupKeyRecord?.note || null]
     );
+    
+    // Delete signup key if one was provided (one-time use)
+    if (signupKeyRecord) {
+      await client.query(
+        'DELETE FROM signup_keys WHERE id = $1',
+        [signupKeyRecord.id]
+      );
+    }
+    
+    await client.query('COMMIT');
     
     // Verify role name for the response
     const userWithRole = await query(
@@ -90,6 +134,7 @@ router.post('/signup', async (req, res) => {
       }
     });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Error registering user:', err);
     
     if (err.code === '23505') {
@@ -97,6 +142,8 @@ router.post('/signup', async (req, res) => {
     }
     
     res.status(500).json({ message: 'Server error' });
+  } finally {
+    client.release();
   }
 });
 

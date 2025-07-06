@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MarkdownRenderer from '../components/MarkdownRenderer.vue';
+import CommentsSection from '../components/CommentsSection.vue';
 import ErrorBox from '../components/ErrorBox.vue';
 
 interface Attachment {
@@ -17,6 +18,7 @@ interface Post {
   author: string;
   author_id: number;
   created_at: string;
+  custom_date?: string;
   category_name?: string;
   category_id?: number;
   tags: string[];
@@ -29,10 +31,31 @@ const post = ref<Post | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const popupAttachment = ref<Attachment | null>(null);
+const currentAttachmentIndex = ref(0);
 
 onMounted(async () => {
   await fetchPost();
+  
+  // Add keyboard event listener for escape key
+  document.addEventListener('keydown', handleKeyDown);
 });
+
+// Clean up event listener when component unmounts
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown);
+});
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (!popupAttachment.value) return;
+  
+  if (event.key === 'Escape') {
+    closePopup();
+  } else if (event.key === 'ArrowLeft') {
+    navigateAttachment(-1);
+  } else if (event.key === 'ArrowRight') {
+    navigateAttachment(1);
+  }
+}
 
 async function fetchPost() {
   try {
@@ -82,6 +105,46 @@ function filterByCategory(category: string) {
     query: { category }
   });
 }
+
+function openAttachmentPopup(attachment: Attachment) {
+  if (post.value?.attachments) {
+    const imageAttachments = post.value.attachments.filter(a => 
+      a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)
+    );
+    currentAttachmentIndex.value = imageAttachments.findIndex(a => a.id === attachment.id);
+    popupAttachment.value = attachment;
+    
+    // Set the background image for the popup
+    document.documentElement.style.setProperty('--popup-bg-image', `url('/uploads/${attachment.filename}')`);
+  }
+}
+
+function closePopup() {
+  popupAttachment.value = null;
+}
+
+function navigateAttachment(direction: number) {
+  if (!post.value?.attachments) return;
+  
+  const imageAttachments = post.value.attachments.filter(a => 
+    a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)
+  );
+  
+  if (imageAttachments.length <= 1) return;
+  
+  const newIndex = (currentAttachmentIndex.value + direction + imageAttachments.length) % imageAttachments.length;
+  currentAttachmentIndex.value = newIndex;
+  popupAttachment.value = imageAttachments[newIndex];
+  
+  // Update the background image for the popup
+  document.documentElement.style.setProperty('--popup-bg-image', `url('/uploads/${imageAttachments[newIndex].filename}')`);
+}
+
+function handlePopupBackgroundClick(event: Event) {
+  if (event.target === event.currentTarget) {
+    closePopup();
+  }
+}
 </script>
 
 <template>
@@ -100,7 +163,7 @@ function filterByCategory(category: string) {
           Uploaded by
           <span class="author">{{ post.author }}</span>
           on
-          <span class="date">{{ formatDate(post.created_at) }}</span>
+          <span class="date">{{ formatDate(post.custom_date || post.created_at) }}</span>
         </div>
 
         <div class="post-categorization"
@@ -125,7 +188,7 @@ function filterByCategory(category: string) {
           <div v-for="(attachment, index) in post.attachments.filter(a => a !== null)" :key="index" class="attachment">
 
             <img :src="`/uploads/${attachment.filename}`" :alt="`Attachment ${index + 1}`"
-              v-if="attachment.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="popupAttachment = attachment" />
+              v-if="attachment.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)" @click="openAttachmentPopup(attachment)" />
 
             <a :href="`/uploads/${attachment.filename}`" target="_blank" v-else>
               <div class="file-attachment">
@@ -141,10 +204,26 @@ function filterByCategory(category: string) {
         <router-link to="/blog" class="link-button secondary bordered">Back to Blog</router-link>
       </div>
 
-      <div id="image-popup" v-if="popupAttachment">
+      <!-- Comments Section -->
+      <CommentsSection :post-id="post.id" />
+
+      <div id="image-popup" v-if="popupAttachment" @click="handlePopupBackgroundClick">
         <div class="popup-content">
           <img :src="`/uploads/${popupAttachment.filename}`" :alt="`Attachment ${popupAttachment.filename.substring('attachments-'.length)}`" />
-          <button class="close-button" @click="popupAttachment = null">Close</button>
+          
+          <!-- Navigation arrows -->
+          <button class="nav-arrow nav-arrow-left" @click="navigateAttachment(-1)" 
+                  v-if="post && post.attachments.filter(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).length > 1">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button class="nav-arrow nav-arrow-right" @click="navigateAttachment(1)"
+                  v-if="post && post.attachments.filter(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)).length > 1">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+          
+          <button class="close-button" @click="closePopup">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
       </div>
     </div>
@@ -299,26 +378,133 @@ function filterByCategory(category: string) {
   position: relative;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
   max-width: 80%;
   max-height: 80%;
+  width: 80vw;
+  height: 80vh;
 }
 
 .popup-content img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  /* border-radius: 8px; */
+}
+.popup-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  background-image: var(--popup-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(20px);
+  mask: radial-gradient(circle at center,black);
+  /* opacity: 0.3; */
+  z-index: -1;
   border-radius: 8px;
+  overflow: hidden;
 }
 .close-button {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: var(--color-primary);
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 8px;
+  border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  font-size: 24px;
+}
+
+.nav-arrow:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.nav-arrow-left {
+  left: 20px;
+}
+
+.nav-arrow-right {
+  right: 20px;
+}
+
+.nav-arrow .material-symbols-outlined {
+  font-size: 28px;
+}
+
+/* Mobile responsiveness for popup */
+@media (max-width: 768px) {
+  .popup-content {
+    max-width: 95%;
+    max-height: 95%;
+  }
+  
+  .nav-arrow {
+    padding: 8px;
+  }
+  
+  .nav-arrow-left {
+    left: 10px;
+  }
+  
+  .nav-arrow-right {
+    right: 10px;
+  }
+  
+  .nav-arrow .material-symbols-outlined {
+    font-size: 24px;
+  }
+}
+
+@media print {
+  .post-navigation,
+  .comment-form,
+  .comment-actions {
+    display: none !important;
+  }
+
+  .post-meta,
+  .comment-date {
+    color: #000 !important;
+    font-style: normal !important;
+  }
+  .comment-content {
+    border: 2px solid #ccc !important;
+    border-radius: none !important;
+    background-color: transparent !important;
+  }
 }
 
 </style>

@@ -17,15 +17,15 @@
   "license": "GPLv3",
   "type": "module",
   "devDependencies": {
-    "@types/node": "^22.15.29",
-    "@vitejs/plugin-vue": "^5.2.4",
+    "@types/node": "^24.0.10",
+    "@vitejs/plugin-vue": "^6.0.0",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^7.0.2"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
-    "lucide-vue-next": "^0.513.0",
+    "lucide-vue-next": "^0.525.0",
     "markdown-it": "^14.1.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-deflist": "^3.0.0",
@@ -36,8 +36,8 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "markdown-it-texmath": "^1.0.0",
-    "mermaid": "^11.6.0",
-    "vue": "^3.5.16",
+    "mermaid": "^11.8.0",
+    "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   }
 }

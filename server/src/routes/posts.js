@@ -1,6 +1,7 @@
 import express from 'express';
 import { query, getClient } from '../db/db.js';
 import { auth, isWriterOrModerator, getUserId, getUserRole } from '../middleware/auth.js';
+import { checkSiteAccess } from '../middleware/siteAccess.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -219,19 +220,39 @@ router.put('/categories/:id', auth, isWriterOrModerator, async (req, res) => {
 
 /** 
  * @route   GET /api/posts 
- * @desc    Get all posts with filters 
- * @access  Public 
+ * @desc    Get all posts with filters, pagination, and sorting
+ * @access  Public/Private (based on site settings)
  */
-router.get('/', async (req, res) => {
+router.get('/', checkSiteAccess, async (req, res) => {
   try {
-    // Extract query parameters for filtering
-    const { category, tag, author, limit, offset } = req.query;
+    // Extract query parameters for filtering, pagination, and sorting
+    const { 
+      category, 
+      tag, 
+      author, 
+      page = 1, 
+      limit = 20, 
+      sortBy = 'date', 
+      sortOrder = 'desc' 
+    } = req.query;
+    
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Max 100 posts per page
+    const offset = (pageNum - 1) * limitNum;
+    
+    // Validate sort parameters
+    const validSortBy = ['date', 'title', 'author'];
+    const validSortOrder = ['asc', 'desc'];
+    const sortColumn = validSortBy.includes(sortBy) ? sortBy : 'date';
+    const sortDirection = validSortOrder.includes(sortOrder) ? sortOrder : 'desc';
     
     let sqlQuery = `
       SELECT 
         p.id, 
         p.title, 
         p.content, 
+        p.custom_date,
         p.created_at, 
         p.updated_at,
         u.username as author,
@@ -289,23 +310,85 @@ router.get('/', async (req, res) => {
     // Complete the query with GROUP BY and ORDER BY
     sqlQuery += `
       GROUP BY p.id, u.username, u.id, c.id, c.name
-      ORDER BY p.created_at DESC
     `;
     
-    // Add pagination if specified
-    if (limit) {
-      queryParams.push(parseInt(limit));
-      sqlQuery += ` LIMIT $${queryParams.length}`;
+    // Add sorting
+    if (sortColumn === 'date') {
+      sqlQuery += ` ORDER BY COALESCE(p.custom_date, p.created_at) ${sortDirection.toUpperCase()}`;
+    } else if (sortColumn === 'title') {
+      sqlQuery += ` ORDER BY p.title ${sortDirection.toUpperCase()}`;
+    } else if (sortColumn === 'author') {
+      sqlQuery += ` ORDER BY u.username ${sortDirection.toUpperCase()}`;
     }
     
-    if (offset) {
-      queryParams.push(parseInt(offset));
-      sqlQuery += ` OFFSET $${queryParams.length}`;
-    }
+    // Add pagination
+    queryParams.push(limitNum);
+    sqlQuery += ` LIMIT $${queryParams.length}`;
+    
+    queryParams.push(offset);
+    sqlQuery += ` OFFSET $${queryParams.length}`;
     
     const result = await query(sqlQuery, queryParams);
     
-    res.json(result.rows);
+    // Get total count for pagination info
+    let countQuery = `
+      SELECT COUNT(DISTINCT p.id) as total
+      FROM posts p
+      JOIN users u ON p.author_id = u.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN post_tags pt ON p.id = pt.post_id
+      LEFT JOIN tags t ON pt.tag_id = t.id
+    `;
+    
+    const countParams = [];
+    const countWhereConditions = [];
+    
+    // Apply same filters for count
+    if (category) {
+      countParams.push(category);
+      countWhereConditions.push(`c.name = $${countParams.length}`);
+    }
+    
+    if (tag) {
+      countParams.push(tag);
+      countWhereConditions.push(`
+        p.id IN (
+          SELECT pt.post_id 
+          FROM post_tags pt 
+          JOIN tags t ON pt.tag_id = t.id 
+          WHERE t.name = $${countParams.length}
+        )
+      `);
+    }
+    
+    if (author) {
+      countParams.push(author);
+      countWhereConditions.push(`u.username = $${countParams.length}`);
+    }
+    
+    if (countWhereConditions.length > 0) {
+      countQuery += ` WHERE ${countWhereConditions.join(' AND ')}`;
+    }
+    
+    const countResult = await query(countQuery, countParams);
+    const totalPosts = parseInt(countResult.rows[0].total);
+    const totalPages = Math.ceil(totalPosts / limitNum);
+    
+    res.json({
+      posts: result.rows,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalPosts,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+        limit: limitNum
+      },
+      sorting: {
+        sortBy: sortColumn,
+        sortOrder: sortDirection
+      }
+    });
   } catch(err) {
     console.error('Error fetching posts:', err);
     res.status(500).json({ message: 'Server error' });
@@ -323,7 +406,7 @@ router.post('/', auth, isWriterOrModerator, upload.array('attachments', 5), asyn
   try {
     await client.query('BEGIN');
     
-    const { title, content, category_id, tags } = req.body;
+    const { title, content, category_id, tags, custom_date } = req.body;
     const userId = getUserId(req);
     
     // Validate input
@@ -331,10 +414,25 @@ router.post('/', auth, isWriterOrModerator, upload.array('attachments', 5), asyn
       return res.status(400).json({ message: 'Title and content are required' });
     }
     
-    // Insert post with category
+    // Validate and parse custom_date if provided
+    let parsedCustomDate = null;
+    if (custom_date) {
+      try {
+        parsedCustomDate = new Date(custom_date);
+        if (isNaN(parsedCustomDate.getTime())) {
+          return res.status(400).json({ message: 'Invalid date format' });
+        }
+        // Keep as ISO string for PostgreSQL TIMESTAMP type
+        parsedCustomDate = parsedCustomDate.toISOString();
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid date format' });
+      }
+    }
+    
+    // Insert post with category and custom date
     const postResult = await client.query(
-      'INSERT INTO posts (title, content, author_id, category_id) VALUES ($1, $2, $3, $4) RETURNING *',
-      [title, content, userId, category_id || null]
+      'INSERT INTO posts (title, content, author_id, category_id, custom_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, content, userId, category_id || null, parsedCustomDate]
     );
     
     const postId = postResult.rows[0].id;
@@ -386,6 +484,7 @@ router.post('/', auth, isWriterOrModerator, upload.array('attachments', 5), asyn
         p.id, 
         p.title, 
         p.content, 
+        p.custom_date,
         p.created_at, 
         p.updated_at,
         u.username as author,
@@ -420,9 +519,9 @@ router.post('/', auth, isWriterOrModerator, upload.array('attachments', 5), asyn
 /** 
  * @route   GET /api/posts/:id 
  * @desc    Get a single post with attachments, category, and tags 
- * @access  Public 
+ * @access  Public/Private (based on site settings)
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkSiteAccess, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -431,6 +530,7 @@ router.get('/:id', async (req, res) => {
         p.id, 
         p.title, 
         p.content, 
+        p.custom_date,
         p.created_at, 
         p.updated_at,
         u.username as author,
@@ -475,7 +575,7 @@ router.put('/:id', auth, upload.array('attachments', 5), async (req, res) => {
     await client.query('BEGIN');
     
     const { id } = req.params;
-    const { title, content, category_id, removeAttachments, tags } = req.body;
+    const { title, content, category_id, removeAttachments, tags, custom_date } = req.body;
     const userId = getUserId(req);
     const userRole = getUserRole(req);
     
@@ -502,12 +602,27 @@ router.put('/:id', auth, upload.array('attachments', 5), async (req, res) => {
       return res.status(400).json({ message: 'Title and content are required' });
     }
     
-    // Update post with category
+    // Validate and parse custom_date if provided
+    let parsedCustomDate = null;
+    if (custom_date) {
+      try {
+        parsedCustomDate = new Date(custom_date);
+        if (isNaN(parsedCustomDate.getTime())) {
+          return res.status(400).json({ message: 'Invalid date format' });
+        }
+        // Keep as ISO string for PostgreSQL TIMESTAMP type
+        parsedCustomDate = parsedCustomDate.toISOString();
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid date format' });
+      }
+    }
+    
+    // Update post with category and custom date
     await client.query(
       `UPDATE posts 
-       SET title = $1, content = $2, category_id = $3, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $4`,
-      [title, content, category_id || null, id]
+       SET title = $1, content = $2, category_id = $3, custom_date = $4, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5`,
+      [title, content, category_id || null, parsedCustomDate, id]
     );
     
     // Handle attachments

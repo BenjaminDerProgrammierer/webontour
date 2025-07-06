@@ -5,6 +5,7 @@ import router from '../router';
 const isLogin = ref(router.currentRoute.value.path === '/login');
 console.log('isLogin:', isLogin.value, router.currentRoute.value.path);
 const needsSetup = ref(false);
+const registrationMode = ref('invite_only'); // 'open', 'invite_only', 'closed'
 
 // Input fields
 const user = ref('');
@@ -22,6 +23,7 @@ const error = ref<string | null>(null);
 onMounted(async () => {
   // check if already logged in
   await checkSetupStatus();
+  await fetchRegistrationMode();
 });
 
 // Check if the app needs setup
@@ -47,6 +49,31 @@ async function checkSetupStatus() {
   }
 }
 
+// Check registration mode to determine if signup key is needed
+async function fetchRegistrationMode() {
+  try {
+    const response = await fetch('/api/site-settings/public', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      registrationMode.value = data.registration_mode || 'invite_only';
+    } else {
+      // Default to invite_only if we can't fetch settings
+      registrationMode.value = 'invite_only';
+    }
+  } catch (err) {
+    console.error('Error fetching registration mode:', err);
+    // Default to invite_only on error
+    registrationMode.value = 'invite_only';
+  }
+}
+
 // Try to login the user
 async function login(event: Event) {
   event.preventDefault();
@@ -68,7 +95,7 @@ async function login(event: Event) {
 
     if (response.ok) {
       console.log('Login successful:', data);
-      router.push('/admin');
+      router.push('/');
     } else {
       console.error('Login failed:', data);
       loginError.value = data.message || 'Login failed';
@@ -87,6 +114,12 @@ async function signup(event: Event) {
   // Basic validation
   if (!user.value || !email.value || !password.value) {
     signupError.value = 'All fields are required';
+    return;
+  }
+  
+  // For invite-only mode, signup key is required
+  if (registrationMode.value === 'invite_only' && !signupKey.value) {
+    signupError.value = 'Signup key is required';
     return;
   }
   
@@ -111,27 +144,33 @@ async function signup(event: Event) {
     username: user.value,
     email: email.value,
     password: password.value,
-    masterKey: signupKey.value
+    signupKey: signupKey.value
   });
 
   try {
+    const requestBody: any = {
+      username: user.value,
+      email: email.value,
+      password: password.value
+    };
+    
+    // Only include signup key if in invite-only mode and key is provided
+    if (registrationMode.value === 'invite_only' && signupKey.value) {
+      requestBody.signupKey = signupKey.value;
+    }
+
     const response = await fetch(`/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({
-        username: user.value,
-        email: email.value,
-        password: password.value,
-        masterKey: signupKey.value
-      })
+      body: JSON.stringify(requestBody)
     });
     
     if (response.ok) {
       console.log('User created successfully');
-      router.push('/admin');
+      router.push('/');
 
     } else {
       const data = await response.json();
@@ -250,7 +289,7 @@ async function setup(event: Event) {
       <div v-else class="signup-form">
         <h2>Sign Up</h2>
         <form @submit="signup">
-          <div>
+          <div v-if="registrationMode === 'invite_only'">
             <label for="key">Sign Up key:</label>
             <input type="text" id="key" name="signupkey" v-model="signupKey" required>
           </div>

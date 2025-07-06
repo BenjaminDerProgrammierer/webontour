@@ -16,6 +16,7 @@ interface Post {
     author: string;
     created_at: string;
     updated_at: string;
+    custom_date?: string;
     published: boolean;
     attachments: Attachment[];
     category_id?: number;
@@ -86,7 +87,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                     <h3 class="single-line">{{ post.title }}</h3>
                     <div class="post-meta">
                         <span class="author">By {{ post.author }}</span>
-                        <span class="date">{{ formatDate(post.created_at) }}</span>
+                        <span class="date">{{ formatDate(post.custom_date || post.created_at) }}</span>
                     </div>
                     <p class="single-line">{{ truncateContent(post.content) }}</p>
                     <router-link :to="`/post/${post.id}`" class="link-button secondary read-more">Read

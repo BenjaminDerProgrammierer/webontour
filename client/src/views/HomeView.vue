@@ -5,15 +5,73 @@ import LatestCategories from '../components/LatestCategories.vue';
 import { ref, onMounted } from 'vue';
 import ErrorBox from '../components/ErrorBox.vue';
 import Navbar from '../components/Navbar.vue';
+import { useRouter } from 'vue-router';
 
 interface HealthResponse {
     status: string;
 }
 
+interface User {
+  id: number;
+  username: string;
+  role: string;
+}
+
+const router = useRouter();
 const apiError = ref<Error | null>(null);
 const noPosts = ref(false);
+const hasAuthError = ref(false);
+const currentUser = ref<User | null>(null);
+const isLoggedIn = ref(false);
+
+async function fetchCurrentUser() {
+  try {
+    const response = await fetch('/api/auth/me', {
+      credentials: 'include'
+    });
+    if (response.ok) {
+      currentUser.value = await response.json();
+      isLoggedIn.value = true;
+    }
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    isLoggedIn.value = false;
+  }
+}
+
+function goToLogin() {
+  router.push('/login');
+}
+
+function goToAdmin() {
+  router.push('/admin');
+}
+
+function handleAuthError(hasError: boolean) {
+  hasAuthError.value = hasError;
+}
+
+function handlePostsLoaded(hasPosts: boolean) {
+  noPosts.value = !hasPosts;
+}
+
+async function logout() {
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    currentUser.value = null;
+    isLoggedIn.value = false;
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+}
 
 onMounted(async () => {
+    // Check if user is logged in
+    await fetchCurrentUser();
+    
     // Check health
     try {
         const response = await fetch(`/api/health`);
@@ -41,6 +99,18 @@ onMounted(async () => {
 </script>
 
 <template>
+    <!-- Login/User Status Bar -->
+    <div class="user-status-bar">
+        <div v-if="isLoggedIn" class="user-info">
+            <span>Welcome, {{ currentUser?.username }}!</span>
+            <button @click="goToAdmin" class="link-button secondary small">Dashboard</button>
+            <button @click="logout" class="link-button secondary small">Logout</button>
+        </div>
+        <div v-else class="login-prompt">
+            <button @click="goToLogin" class="link-button primary login-btn">Log In</button>
+        </div>
+    </div>
+
     <Logo />
     <section id="hero">
         <div class="magicpattern"></div>
@@ -62,8 +132,8 @@ onMounted(async () => {
         <template v-else>
             <h2>Recent Posts</h2>
             <div>
-                <RecentPosts />
-                <div class="sidebar" v-if="!noPosts">
+                <RecentPosts @auth-error="handleAuthError" @posts-loaded="handlePostsLoaded" />
+                <div class="sidebar" v-if="!noPosts && !hasAuthError">
                     <h3>Latest Destinations</h3>
                     <LatestCategories />
                     <router-link to="/blog" class="link-button primary">View All Blog Posts</router-link>
@@ -98,6 +168,57 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* User Status Bar */
+.user-status-bar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 10px 15px;
+    border-radius: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.user-info span {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.login-prompt .login-btn {
+    background-color: #27ae60;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.login-prompt .login-btn:hover {
+    background-color: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+.link-button.small {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
 section {
     width: 100vw;
 }
