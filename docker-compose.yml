@@ -13,6 +13,7 @@ services:
       - NODE_ENV=production
       - PORT=${CLIENT_PORT}
       - VITE_API_URL=http://server:${SERVER_PORT}
+    restart: unless-stopped
     container_name: webontour-client
     depends_on:
       - server
@@ -30,6 +31,7 @@ services:
       - PORT=${SERVER_PORT}
     env_file:
       - .env
+    restart: unless-stopped
     container_name: webontour-server
     depends_on:
       db:
