@@ -66,14 +66,9 @@ router.delete('/:id', auth, isAdmin, async (req, res) => {
     const { id } = req.params;
     
     // Check if key exists
-    const keyCheck = await query('SELECT id, is_used FROM signup_keys WHERE id = $1', [id]);
+    const keyCheck = await query('SELECT id FROM signup_keys WHERE id = $1', [id]);
     if (keyCheck.rows.length === 0) {
       return res.status(404).json({ message: 'Signup key not found' });
-    }
-    
-    // Don't allow deletion of used keys
-    if (keyCheck.rows[0].is_used) {
-      return res.status(400).json({ message: 'Cannot delete used signup key' });
     }
     
     await query('DELETE FROM signup_keys WHERE id = $1', [id]);
@@ -127,16 +122,12 @@ router.post('/validate', async (req, res) => {
     }
     
     const result = await query(
-      'SELECT id, is_used FROM signup_keys WHERE key_value = $1',
+      'SELECT id FROM signup_keys WHERE key_value = $1',
       [key]
     );
     
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Invalid signup key' });
-    }
-    
-    if (result.rows[0].is_used) {
-      return res.status(400).json({ message: 'Signup key has already been used' });
     }
     
     res.json({ valid: true, keyId: result.rows[0].id });
