@@ -1,7 +1,7 @@
 <!-- A grid of Posts to showcase recent activity - For use on the Home page. -->
 <script setup lang="ts">
 import PostCard from './PostCard.vue';
-import { ref, onMounted, defineEmits } from 'vue';
+import { ref, onMounted } from 'vue';
 import type { Post } from '../types/Post';
 
 const posts = ref<Post[]>([]);
