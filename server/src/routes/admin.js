@@ -199,7 +199,7 @@ router.get('/tables/:tableName', auth, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const sortBy = req.query.sortBy || 'id';
+    const sortBy = req.query.sortBy || '';
     const sortOrder = req.query.sortOrder === 'desc' ? 'DESC' : 'ASC';
     const search = req.query.search || '';
     
