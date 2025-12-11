@@ -1,0 +1,13 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "https://webontour-api.black2.cf/api/:path*"
+        },
+        {
+            "source": "/uploads/:path*",
+            "destination": "https://webontour-api.black2.cf/uploads/:path*"
+        }
+    ]
+}
