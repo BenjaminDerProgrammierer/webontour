@@ -1,5 +1,7 @@
 # summerproject-2025
 
+![Time Tracked Badge](https://wakapi.black2.cf/api/badge/benjamin/interval:all_time/project:summerproject-2025?label=Time%20Tracked)
+
 HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 ## Usage
