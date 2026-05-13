@@ -17,8 +17,9 @@ services:
       DB_PORT: ${DB_PORT}
       JWT_SECRET: ${JWT_SECRET}
       MASTER_SIGNUP_KEY: ${MASTER_SIGNUP_KEY}
+      PORT: ${PORT:-3000}
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     depends_on:
       db:
         condition: service_healthy
