@@ -22,6 +22,8 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 COPY server/package.json server/pnpm-lock.yaml server/pnpm-workspace.yaml ./
 
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
@@ -30,7 +32,6 @@ COPY server/ ./
 
 COPY --from=client-build /app/dist ./public
 
-ENV NODE_ENV=production
 EXPOSE 3000
 
 CMD ["node", "src/main.js"]

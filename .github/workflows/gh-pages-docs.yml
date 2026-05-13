@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["docs/**", "build-docs.sh"]
+    paths:
+      - "docs/**"
+      - "build-docs.sh"
+      - ".github/workflows/gh-pages-docs.yml"
 
 permissions:
   contents: read
@@ -22,8 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
-      - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install -y pandoc
+      - name: Install Pandoc
+        uses: pandoc/actions/setup@v1
+        with:
+          version: 3.5
 
       - name: Build
         run: ./build-docs.sh docs dist

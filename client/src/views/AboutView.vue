@@ -10,7 +10,6 @@ import ImageGallery from '../components/ImageGallery.vue';
             <span>About us</span>
             <div></div>
         </h1>
-        <!-- TODO -->
         <p>Hier kommst später etwas mehr inhalt hin.</p>
         <ImageGallery />
     </div>

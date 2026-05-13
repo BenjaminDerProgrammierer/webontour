@@ -4,15 +4,21 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["client/**", "server/**"]
+    paths:
+      - "client/**"
+      - "server/**"
+      - "Dockerfile"
+      - ".github/workflows/build.yml"
+
+concurrency:
+  group: docker-webontour
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
-      id-token: write
 
     steps:
       - name: Check out the repo
@@ -30,4 +36,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: benjaminderprogrammierer/webontour:latest
+          tags: |
+            benjaminderprogrammierer/webontour:latest
+            benjaminderprogrammierer/webontour:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

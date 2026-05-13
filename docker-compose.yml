@@ -1,3 +1,6 @@
+volumes:
+  db_data:
+
 services:
   webontour:
     image: benjaminderprogrammierer/webontour:latest
@@ -15,17 +18,19 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       MASTER_SIGNUP_KEY: ${MASTER_SIGNUP_KEY}
     ports:
-      - "${PORT}:3000"
+      - "${PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./server/attachments:/attachments
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 1s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
   db:
-    image: postgres:latest
+    image: postgres:18-alpine
     container_name: webontour-db
     restart: unless-stopped
     environment:
@@ -33,9 +38,11 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
-      interval: 5s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
