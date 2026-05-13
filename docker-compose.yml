@@ -1,85 +1,41 @@
 services:
-  client:
-    image: benjaminderprogrammierer/webontour-client:latest
+  webontour:
+    image: benjaminderprogrammierer/webontour:latest
     build:
-      context: ./client
-      dockerfile: Dockerfile.prod
-      args:
-        - VITE_API_URL=http://server:${SERVER_PORT}
-        - PORT=${CLIENT_PORT}
+      context: .
+      dockerfile: Dockerfile
+    container_name: webontour
+    restart: unless-stopped
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      MASTER_SIGNUP_KEY: ${MASTER_SIGNUP_KEY}
     ports:
-      - '${CLIENT_PORT}:${CLIENT_PORT}'
-    environment:
-      - NODE_ENV=production
-      - PORT=${CLIENT_PORT}
-      - VITE_API_URL=http://server:${SERVER_PORT}
-    restart: unless-stopped
-    container_name: webontour-client
-    depends_on:
-      - server
-    networks:
-      - webontour_network
-  server:
-    image: benjaminderprogrammierer/webontour-server:latest
-    build:
-      context: ./server
-      dockerfile: Dockerfile.prod
-    # ports:
-    #   - '3000:3000' # no need to expose port, as API is proxied through the client.
-    environment:
-      - NODE_ENV=production
-      - PORT=${SERVER_PORT}
-    env_file:
-      - .env
-    restart: unless-stopped
-    container_name: webontour-server
+      - "${PORT}:3000"
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - webontour_network
-    volumes:
-      - ./storage/attachments:/attachments
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT}/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 1s
+      timeout: 10s
+      retries: 3
   db:
     image: postgres:latest
     container_name: webontour-db
-    restart: always
-    env_file:
-      - .env
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "${DB_PORT}:5432"
-    volumes:
-      - ./storage/data:/var/lib/postgresql/data
-    networks:
-      - webontour_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  updater:
-    image: benjaminderprogrammierer/webontour-updater:latest
-    container_name: webontour-updater
-    restart: unless-stopped
-    environment:
-      - PORT=8080
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-    build:
-      context: ./updater
-      dockerfile: Dockerfile
-    network_mode: host
-
-
-networks:
-  webontour_network:
-    name: webontour-network
-    driver: bridge
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 5s
+      timeout: 10s
+      retries: 3

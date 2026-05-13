@@ -31,19 +31,16 @@ generate_mixed_password() {
 DB_PASSWORD=$(generate_mixed_password)
 JWT_SECRET=$(openssl rand -hex 256)
 MASTER_SIGNUP_KEY=$(generate_mixed_password)
-WEBHOOK_SECRET=$(generate_mixed_password)
 
 # Replace placeholder values with secure generated values
 # Using alternate delimiter (|) to avoid issues with special characters in generated passwords
 sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" "$ENV_TARGET"
 sed -i "s|JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" "$ENV_TARGET"
 sed -i "s|MASTER_SIGNUP_KEY=.*|MASTER_SIGNUP_KEY=$MASTER_SIGNUP_KEY|" "$ENV_TARGET"
-sed -i "s|WEBHOOK_SECRET=.*|WEBHOOK_SECRET=$WEBHOOK_SECRET|" "$ENV_TARGET"
 
 echo "Success: Generated secure .env file with the following values:"
 echo "DB_PASSWORD: $DB_PASSWORD"
 echo "JWT_SECRET: $JWT_SECRET"
 echo "MASTER_SIGNUP_KEY: $MASTER_SIGNUP_KEY"
-echo "WEBHOOK_SECRET: $WEBHOOK_SECRET"
 echo ""
 echo "Your .env file is ready to use!"

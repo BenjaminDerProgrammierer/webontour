@@ -6,10 +6,25 @@ WEBonTour Blog System
 
 ## Usage
 
-- Clone the repository
+There are a few ways to run the project.
+
+### Without Docker
+
+- Install Node.js and pnpm on your machine if you haven't already.
+- Use `./generate-secrets.sh` to generate passwords for your environment variables. Only use JWT_SECRET and MASTER_SIGNUP_KEY and manually set them in the server's `.env` file. Check the `.env` file for other required environment variables.
+- Use `pnpm install` to install the dependencies for both the frontend and backend.
+- Start the backend server with `pnpm dev` (or `pnpm start` for production) in the server directory
+- Start the frontend development server with `pnpm dev` (or `pnpm build` -> `pnpm preview` for simulated production) in the client directory.
+
+### With Docker Compose
+
 - Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) if you haven't already.
-- Use `./generate-secrets.sh` to generate passwords for your environment variables. Check the `.env` file for the required environment variables. (See [below](#environment-variables))
+- Use `./generate-secrets.sh` to generate passwords for your environment variables. Check the `.env` file for other required environment variables.
 - Run `docker compose -f docker-compose.dev.yml up` to start the development server or `docker compose up -d` instead for the production server.
+
+### Only a database
+
+- Use the `diocker-compose.db.yml` file to only start the database.
 
 ## Changelog
 
@@ -67,14 +82,6 @@ WEBonTour Blog System
 
 ## todos
 
-### Important bugs to fix now
-
-- Admin CRUD, Logo, User management, markdown renderer: TS, composition API, general types
-
-### Recently Added Features
-
-- **Comments System**: Users can now comment on blog posts with nested replies, edit/delete functionality, and proper authentication
-
 ### Optional improvements to do later
 
 #### Really optional, but would be nice to have
@@ -95,21 +102,6 @@ WEBonTour Blog System
 
 - markdown features on post page: callout, emoji preview
 - pinned posts for the admin
-
-## Environment Variables
-
-| Variable | Description |
-| -------- | ----------- |
-| `CLIENT_PORT` | The port for the client |
-| `DB_USER` | database user |
-| `DB_PASSWORD` | database password |
-| `DB_HOST` | database host |
-| `DB_NAME` | database name |
-| `DB_PORT` | database port |
-| `JWT_SECRET` | secret for JWT |
-| `MASTER_SIGNUP_KEY` | secret for master signup |
-| `SERVER_PORT` | The port for the server |
-| `VITE_API_URL` | The base URL for the API. This is used to make requests to the backend server. |
 
 ## License
 
