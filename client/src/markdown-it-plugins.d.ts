@@ -1,0 +1,37 @@
+// Type declarations for markdown-it plugins
+
+declare module 'markdown-it-task-lists' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt, options?: any): void;
+  export default plugin;
+}
+
+declare module 'markdown-it-deflist' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt): void;
+  export default plugin;
+}
+
+declare module 'markdown-it-sub' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt): void;
+  export default plugin;
+}
+
+declare module 'markdown-it-sup' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt): void;
+  export default plugin;
+}
+
+declare module 'markdown-it-mark' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt): void;
+  export default plugin;
+}
+
+declare module 'markdown-it-texmath' {
+  import type MarkdownIt from 'markdown-it';
+  function plugin(md: MarkdownIt, options?: any): void;
+  export default plugin;
+}

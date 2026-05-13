@@ -4,7 +4,6 @@ import Logo from '../components/Logo.vue';
 import LatestCategories from '../components/LatestCategories.vue';
 import { ref, onMounted } from 'vue';
 import ErrorBox from '../components/ErrorBox.vue';
-import Navbar from '../components/Navbar.vue';
 import { useRouter } from 'vue-router';
 
 interface HealthResponse {

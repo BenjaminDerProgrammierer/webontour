@@ -1,7 +1,7 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // Create a singleton pool instance to reuse connections
 let _pool = null;

@@ -1,19 +1,32 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
-const users = ref([]);
-const roles = ref([]);
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+}
+
+const users = ref<User[]>([]);
+const roles = ref<Role[]>([]);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 const successMessage = ref('');
 
 // User being edited
-const editingUserId = ref(null);
-const selectedRoleId = ref(null);
+const editingUserId = ref<number | null>(null);
+const selectedRoleId = ref<number | null>(null);
 
 // User edit form 
 const editForm = ref({
-  id: null,
+  id: null as number | null,
   username: '',
   email: '',
   currentPassword: '',
@@ -22,18 +35,18 @@ const editForm = ref({
 });
 
 // Delete confirmation
-const userToDelete = ref(null);
+const userToDelete = ref<User | null>(null);
 const showDeleteConfirm = ref(false);
 
 // Reset password
-const resetPasswordUserId = ref(null);
+const resetPasswordUserId = ref<number | null>(null);
 const resetPasswordForm = ref({
   newPassword: '',
   confirmPassword: ''
 });
 
 // Edit mode
-const editMode = ref(null); // 'role', 'profile', 'password', 'delete'
+const editMode = ref<'role' | 'profile' | 'password' | 'delete' | null>(null);
 
 onMounted(async () => {
   await Promise.all([fetchUsers(), fetchRoles()]);
@@ -53,7 +66,7 @@ async function fetchUsers() {
     }
   } catch (err) {
     console.error('Error fetching users:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
@@ -70,11 +83,11 @@ async function fetchRoles() {
     }
   } catch (err) {
     console.error('Error fetching roles:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
-function startEditRole(user) {
+function startEditRole(user: User) {
   // Reset any previous edit mode
   cancelEdit();
 
@@ -86,7 +99,7 @@ function startEditRole(user) {
   selectedRoleId.value = roleObj ? roleObj.id : null;
 }
 
-function startEditProfile(user) {
+function startEditProfile(user: User) {
   // Reset any previous edit mode
   cancelEdit();
 
@@ -103,7 +116,7 @@ function startEditProfile(user) {
   };
 }
 
-function startResetPassword(user) {
+function startResetPassword(user: User) {
   // Reset any previous edit mode
   cancelEdit();
 
@@ -116,7 +129,7 @@ function startResetPassword(user) {
   };
 }
 
-function startDeleteUser(user) {
+function startDeleteUser(user: User) {
   // Reset any previous edit mode
   cancelEdit();
 
@@ -148,7 +161,7 @@ function cancelEdit() {
   };
 }
 
-async function updateUserRole(userId) {
+async function updateUserRole(userId: number) {
   if (!selectedRoleId.value) {
     error.value = 'Please select a role';
     return;
@@ -174,7 +187,7 @@ async function updateUserRole(userId) {
     }
   } catch (err) {
     console.error('Error updating user role:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
@@ -215,7 +228,7 @@ async function updateUserProfile() {
     }
   } catch (err) {
     console.error('Error updating user profile:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
@@ -257,7 +270,7 @@ async function resetPassword() {
     }
   } catch (err) {
     console.error('Error resetting password:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
@@ -283,11 +296,11 @@ async function deleteUser() {
     }
   } catch (err) {
     console.error('Error deleting user:', err);
-    error.value = err.message;
+    error.value = err instanceof Error ? err.message : 'An error occurred';
   }
 }
 
-function showSuccessMessage(message) {
+function showSuccessMessage(message: string) {
   successMessage.value = message;
   setTimeout(() => {
     successMessage.value = '';

@@ -1,9 +1,8 @@
 # server data
 storage
-old_storage
 
 # dotenv environment variable files
-.env
+# .env
 
 # Node Modules
 node_modules

@@ -60,7 +60,7 @@ try {
 }
 
 // Add custom renderer for ordered lists to handle a, b, c style nested lists
-md.renderer.rules.ordered_list_open = function(tokens, idx, options, env, self) {
+md.renderer.rules.ordered_list_open = function(tokens, idx, _options, _env, _self) {
   const token = tokens[idx];
   const level = token.level;
   
@@ -82,7 +82,7 @@ md.renderer.rules.ordered_list_open = function(tokens, idx, options, env, self) 
 };
 
 // Enhanced callout processing logic
-const processCallouts = (markdown) => {
+const processCallouts = (markdown: string): string => {
   if (!markdown) return '';
   
   // Improved regex to match callout syntax more precisely:
@@ -177,41 +177,6 @@ const processCallouts = (markdown) => {
   return processed;
 };
 
-// Helper function to render the callout HTML using the Callout component
-function renderCalloutHTML(type, title, content, foldable = false, collapsed = false, bgColor = '', iconName = '') {
-  // Process callout content through markdown
-  const processedContent = md.render(content);
-  
-  // Create a container for the callout
-  const calloutContainer = document.createElement('div');
-  calloutContainer.className = 'vue-callout-container';
-  
-  // Create a props object for the Callout component
-  const calloutProps = {
-    type,
-    title,
-    content: processedContent,
-    folded: collapsed ? true : undefined,
-    icon: iconName || ''
-  };
-  
-  // Create and mount a Vue component
-  const app = createApp({
-    render() {
-      return h(Callout, calloutProps);
-    }
-  });
-  
-  app.mount(calloutContainer);
-  
-  return calloutContainer.outerHTML;
-}
-
-// Helper function to capitalize the first letter
-function capitalize(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
 const renderMarkdown = () => {
   if (!props.markdown) {
     renderedMarkdown.value = '';
@@ -248,7 +213,9 @@ const processCalloutPlaceholders = () => {
       calloutContainer.className = 'vue-callout-container';
       
       // Replace the placeholder with the callout
-      placeholder.parentNode.replaceChild(calloutContainer, placeholder);
+      if (placeholder.parentNode) {
+        placeholder.parentNode.replaceChild(calloutContainer, placeholder);
+      }
       
       // Mount the Vue component
       const app = createApp({

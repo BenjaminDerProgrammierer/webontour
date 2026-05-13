@@ -19,8 +19,8 @@ export interface Post {
   updated_at: string;
   custom_date?: string;
   published?: boolean;
-  attachments: Attachment[];
+  attachments?: Attachment[];
   category_id?: number;
   category_name?: string;
-  tags: string[];
+  tags?: string[];
 }

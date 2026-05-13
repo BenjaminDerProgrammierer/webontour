@@ -1,27 +1,5 @@
 <script setup lang="ts">
-interface Attachment {
-    id: number;
-    filename: string;
-    originalname: string;
-    size: number;
-    mimetype: string;
-}
-
-interface Post {
-    id: number;
-    title: string;
-    slug: string;
-    content: string;
-    excerpt: string;
-    author: string;
-    created_at: string;
-    updated_at: string;
-    custom_date?: string;
-    published: boolean;
-    attachments: Attachment[];
-    category_id?: number;
-    category_name?: string;
-}
+import type { Post } from '../types/Post';
 
 const props = defineProps<{
     post: Post
@@ -47,7 +25,7 @@ function hasValidImage(): string | false {
     const hasAttachment = props.post.attachments && 
         props.post.attachments.some(a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i));
     
-    if (hasAttachment) {
+    if (hasAttachment && props.post.attachments) {
         const attachment = props.post.attachments.find(
             a => a !== null && a.filename.match(/\.(jpeg|jpg|gif|png|webp)$/i)
         );

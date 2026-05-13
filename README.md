@@ -1,8 +1,8 @@
-# summerproject-2025
+# WEBonTour
 
 ![Time Tracked Badge](https://wakapi.black2.cf/api/badge/benjamin/interval:all_time/project:summerproject-2025?label=Time%20Tracked)
 
-HTML/CSS Summer Project 2025 #html #css #modern-web-design
+WEBonTour Blog System
 
 ## Usage
 
@@ -54,7 +54,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 
 ### Overall Time Spent
 
-> around 47 hours
+> around 48 hours
 
 ## Quick Links
 
@@ -63,7 +63,7 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 - [Projektantrag](https://docs.webontour.eu/Projektantrag/)
 - [Angabe](https://docs.webontour.eu/1JHG-MEDTWT_Sommerprojekt_2425.pdf)
 - [Website home on webontour.eu](https://webontour.eu/)
-- [GitHub](https://github.com/BenjaminDerProgrammierer/summerproject-2025)
+- [GitHub](https://github.com/BenjaminDerProgrammierer/webontour)
 
 ## todos
 
@@ -109,8 +109,6 @@ HTML/CSS Summer Project 2025 #html #css #modern-web-design
 | `JWT_SECRET` | secret for JWT |
 | `MASTER_SIGNUP_KEY` | secret for master signup |
 | `SERVER_PORT` | The port for the server |
-| `WEBHOOK_SECRET` | secret password for the webhook |
-| `DOCKER_SOCKET_PATH` | path to the Docker socket |
 | `VITE_API_URL` | The base URL for the API. This is used to make requests to the backend server. |
 
 ## License

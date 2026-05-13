@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 import express from 'express';
 import cors from 'cors';
@@ -36,32 +36,46 @@ async function startServer() {
   try {
     // First, initialize the database
     await initDB();
-    
+
     // Get security keys from database if they're not in environment
     const keys = await getSecurityKeys();
-    
+
     // Use environment variables if they exist, otherwise use DB keys
     process.env.JWT_SECRET = process.env.JWT_SECRET || keys.JWT_SECRET;
     process.env.MASTER_SIGNUP_KEY = process.env.MASTER_SIGNUP_KEY || keys.MASTER_SIGNUP_KEY;
-    
+
     if (!process.env.JWT_SECRET) {
       console.error('JWT_SECRET could not be loaded from environment or database');
       process.exit(1);
     }
-    
+
     const app = express();
     const PORT = parseInt(process.env.PORT || "3000");
-    
+
     // Middleware setup
     app.use(cors({
       origin: process.env.CORS_ORIGIN || true,
       credentials: true
     }));
     app.use(express.json());
-    
+
     // Trust the first proxy (Nginx) - Important for secure cookies behind a proxy
     app.set('trust proxy', 1);
-    
+
+    // Determine the attachments directory path based on environment
+    const attachmentsDir = isDocker()
+      ? '/attachments'
+      : join(__dirname, '../attachments');
+
+    // Serve attachments directory
+    app.use('/uploads', express.static(attachmentsDir));
+
+    // if public directory exists, serve it at the root
+    const publicDir = join(__dirname, '../public');
+    if (fs.existsSync(publicDir)) {
+      app.use(express.static(publicDir));
+    }
+
     // Session middleware
     app.use(session({
       secret: process.env.JWT_SECRET,
@@ -74,20 +88,12 @@ async function startServer() {
         sameSite: 'lax' // Helps with CSRF protection
       }
     }));
-    
-    // Determine the attachments directory path based on environment
-    const attachmentsDir = isDocker()
-      ? '/attachments' 
-      : join(__dirname, '../attachments');
-    
-    // Serve attachments directory
-    app.use('/uploads', express.static(attachmentsDir));
-    
+
     // Serve OpenAPI documentation with Swagger UI at /api
     try {
       const openapiPath = join(__dirname, '../openapi.yaml');
       const swaggerDocument = yaml.load(fs.readFileSync(openapiPath, 'utf8'));
-      
+
       // Serve the raw OpenAPI file
       app.get('/api/openapi.yaml', (req, res) => {
         res.set('Content-Type', 'text/yaml');
@@ -107,7 +113,7 @@ async function startServer() {
     } catch (err) {
       console.error('Error setting up Swagger UI:', err);
     }
-    
+
     // API Routes - these will only trigger if the request doesn't match /api exact path
     app.use('/api/auth', authRoutes);
     app.use('/api/posts', postsRoutes);
@@ -116,7 +122,7 @@ async function startServer() {
     app.use('/api/comments', commentsRoutes);
     app.use('/api/signup-keys', signupKeysRoutes);
     app.use('/api/site-settings', siteSettingsRoutes);
-    
+
     // Serve static files from the documents directory
     app.get('/api/document/:filename', (req, res) => {
       let { filename } = req.params;
@@ -129,30 +135,30 @@ async function startServer() {
         res.status(404).json({ message: 'File not found' });
       }
     });
-    
+
     // Health check route
     app.get('/api/health', (req, res) => {
       res.json({ status: 'UP', time: new Date() });
     });
-    
+
     // Global error handler
     app.use((err, req, res, next) => {
       console.error('Unhandled error:', err);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'An unexpected error occurred',
         error: process.env.NODE_ENV === 'production' ? null : err.message
       });
     });
-    
+
     // Start server
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-    
+
     // Handle graceful shutdown
     process.on('SIGTERM', () => gracefulShutdown(server));
     process.on('SIGINT', () => gracefulShutdown(server));
-    
+
     return server;
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -165,10 +171,10 @@ async function startServer() {
  */
 async function gracefulShutdown(server) {
   console.log('Received shutdown signal, closing connections...');
-  
+
   server.close(() => {
     console.log('HTTP server closed.');
-    
+
     // Close database connections
     closePool().then(() => {
       console.log('Database connections closed.');
@@ -178,7 +184,7 @@ async function gracefulShutdown(server) {
       process.exit(1);
     });
   });
-  
+
   // Force close after 10 seconds if graceful shutdown fails
   setTimeout(() => {
     console.error('Could not close connections in time, forcefully shutting down');

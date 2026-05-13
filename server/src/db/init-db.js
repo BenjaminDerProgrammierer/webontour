@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 
 // Initialize database and required directories
 async function initDB() {
-  dotenv.config();
+  dotenv.config({ quiet: true });
 
   // Check for required environment variables
   if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_NAME) {

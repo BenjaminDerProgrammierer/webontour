@@ -1,7 +1,7 @@
 {
-  "name": "webontour-server",
+  "name": "server",
   "version": "1.0.0",
-  "description": "Server application for the WEBonTour Blogging System",
+  "description": "",
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
@@ -10,21 +10,28 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.9",
+      "onFail": "download"
+    }
+  },
   "type": "module",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-session": "^1.18.2",
+    "express-session": "^1.19.0",
     "js-yaml": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
-    "multer": "^2.0.2",
-    "pg": "^8.16.3",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0",
     "swagger-ui-express": "^5.0.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.11"
   }
 }
